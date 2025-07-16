@@ -23,7 +23,8 @@
 	--accent-color: #60a5fa;
 }
 
-html, body {
+html,
+body {
 	height: 100vh;
 	margin: 0;
 	padding: 0;
@@ -32,7 +33,9 @@ html, body {
 body {
 	background-color: var(--bg-primary);
 	color: var(--text-primary);
-	transition: background-color 0.2s ease, color 0.2s ease;
+	transition:
+		background-color 0.2s ease,
+		color 0.2s ease;
 }
 
 #svelte {
@@ -122,10 +125,10 @@ body {
 }
 
 /* Specific fix for directory arrows and folder emojis */
-.dark .file-item span:contains("▶"),
-.dark .file-item span:contains("▼"),
-.dark .file-item span:contains("📁"),
-.dark .file-item span:contains("📄") {
+.dark .file-item span:contains('▶'),
+.dark .file-item span:contains('▼'),
+.dark .file-item span:contains('📁'),
+.dark .file-item span:contains('📄') {
 	background-color: transparent !important;
 	background: none !important;
 	color: inherit !important;

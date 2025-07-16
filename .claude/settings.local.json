@@ -1,12 +1,12 @@
 {
-  "permissions": {
-    "allow": [
-      "Bash(mkdir:*)",
-      "Bash(npm install:*)",
-      "Bash(npm run dev:*)",
-      "Bash(ls:*)",
-      "Bash(chmod:*)"
-    ],
-    "deny": []
-  }
+	"permissions": {
+		"allow": [
+			"Bash(mkdir:*)",
+			"Bash(npm install:*)",
+			"Bash(npm run dev:*)",
+			"Bash(ls:*)",
+			"Bash(chmod:*)"
+		],
+		"deny": []
+	}
 }

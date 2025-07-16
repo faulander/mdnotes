@@ -1,32 +1,32 @@
 <script>
 	import { onMount } from 'svelte';
-	
-	let { 
-		rootPath = '', 
+
+	let {
+		rootPath = '',
 		expandedFolders = new Set(),
 		pinnedFiles = new Set(),
 		recentFiles = [],
 		activeFilePath = null,
 		spacing = 'normal',
 		recentFilesCount = 5,
-		onFileSelect = () => {}, 
+		onFileSelect = () => {},
 		onContextMenu = () => {},
 		onExpandedFoldersChange = () => {},
 		onPinFile = () => {},
 		onUnpinFile = () => {},
 		onRecentFileSelect = () => {}
 	} = $props();
-	
+
 	let fileTree = $state([]);
 	let contextMenu = $state(null);
 	let contextMenuPos = $state({ x: 0, y: 0 });
 	let selectedItem = $state(null);
-	
+
 	// Cache for directory contents
 	let directoryCache = $state(new Map());
 	let loadingFolders = $state(new Set());
 	let refreshTimeout = null;
-	
+
 	// Spacing configuration
 	function getSpacingConfig(spacing) {
 		switch (spacing) {
@@ -56,13 +56,13 @@
 				};
 		}
 	}
-	
+
 	let spacingConfig = $derived(getSpacingConfig(spacing));
-	
+
 	// Helper function to recursively find all files in the tree
 	function getAllFilesFromTree(items) {
 		let allFiles = [];
-		
+
 		function traverse(items) {
 			for (const item of items) {
 				if (item.type === 'file') {
@@ -72,51 +72,50 @@
 				}
 			}
 		}
-		
+
 		traverse(items);
 		return allFiles;
 	}
-	
+
 	// Get all pinned files from the tree
-	let pinnedFilesInTree = $derived(getAllFilesFromTree(fileTree).filter(file => pinnedFiles.has(file.path)));
-	
+	let pinnedFilesInTree = $derived(
+		getAllFilesFromTree(fileTree).filter((file) => pinnedFiles.has(file.path))
+	);
+
 	async function loadDirectory(path = '') {
 		// Check cache first
 		const cacheKey = `${rootPath}:${path}`;
 		if (directoryCache.has(cacheKey)) {
-			console.log(`Using cached data for: ${path || 'root'}`);
 			return directoryCache.get(cacheKey);
 		}
-		
+
 		// Check if already loading
 		if (loadingFolders.has(path)) {
-			console.log(`Already loading: ${path || 'root'}`);
 			return [];
 		}
-		
+
 		try {
 			loadingFolders.add(path);
-			console.time(`Loading directory: ${path || 'root'}`);
-			
-			const response = await fetch(`/api/files?root=${encodeURIComponent(rootPath)}&path=${encodeURIComponent(path)}`);
+
+			const response = await fetch(
+				`/api/files?root=${encodeURIComponent(rootPath)}&path=${encodeURIComponent(path)}`
+			);
 			const data = await response.json();
-			
-			console.timeEnd(`Loading directory: ${path || 'root'}`);
+
 			loadingFolders.delete(path);
-			
+
 			if (data.error) {
 				console.error('Error loading directory:', data.error);
 				return [];
 			}
-			
+
 			const items = data.items || [];
-			console.log(`Loaded ${items.length} items for path "${path || 'root'}":`, items);
 			// Cache the result for 30 seconds
 			directoryCache.set(cacheKey, items);
 			setTimeout(() => {
 				directoryCache.delete(cacheKey);
 			}, 30000);
-			
+
 			return items;
 		} catch (error) {
 			console.error('Error loading directory:', error);
@@ -124,33 +123,31 @@
 			return [];
 		}
 	}
-	
+
 	async function loadFileTree() {
 		fileTree = await loadDirectory();
-		console.log('FileTree loaded:', fileTree);
 	}
-	
+
 	async function toggleFolder(folderPath) {
 		const newExpandedFolders = new Set(expandedFolders);
-		
+
 		if (newExpandedFolders.has(folderPath)) {
 			newExpandedFolders.delete(folderPath);
 		} else {
 			newExpandedFolders.add(folderPath);
-			
+
 			// Load subdirectory if not already loaded
 			const folder = findItemByPath(fileTree, folderPath);
 			if (folder && !folder.children) {
-				console.log('Loading folder contents for:', folderPath);
 				folder.children = await loadDirectory(folderPath);
 				fileTree = [...fileTree];
 			}
 		}
-		
+
 		// Notify parent of the change
 		onExpandedFoldersChange(newExpandedFolders);
 	}
-	
+
 	function findItemByPath(items, targetPath) {
 		for (const item of items) {
 			if (item.path === targetPath) {
@@ -163,7 +160,7 @@
 		}
 		return null;
 	}
-	
+
 	function handleItemClick(item) {
 		if (item.type === 'file') {
 			onFileSelect(item);
@@ -171,19 +168,19 @@
 			toggleFolder(item.path);
 		}
 	}
-	
+
 	function handleContextMenu(event, item) {
 		event.preventDefault();
 		contextMenu = item;
 		contextMenuPos = { x: event.clientX, y: event.clientY };
 		selectedItem = item;
 	}
-	
+
 	function closeContextMenu() {
 		contextMenu = null;
 		selectedItem = null;
 	}
-	
+
 	function handleContextMenuAction(action) {
 		if (action === 'create_folder_root') {
 			// Create a root-level folder (no parent item)
@@ -193,48 +190,39 @@
 		}
 		closeContextMenu();
 	}
-	
+
 	// Expose loadFileTree method with debouncing
 	export async function refresh() {
 		// Clear existing timeout
 		if (refreshTimeout) {
 			clearTimeout(refreshTimeout);
 		}
-		
+
 		// Debounce refresh calls
 		refreshTimeout = setTimeout(async () => {
-			console.log('=== FILE TREE REFRESH CALLED ===');
-			console.log('Previously expanded folders:', Array.from(expandedFolders));
-			
 			// Clear cache to force fresh data
 			directoryCache.clear();
-			
+
 			const previouslyExpanded = new Set(expandedFolders);
 			await loadFileTree();
-			
-			console.log('File tree reloaded, restoring expanded folders...');
-			
+
 			// Restore expanded folders in the correct order (parent to child)
 			const sortedExpandedFolders = Array.from(previouslyExpanded).sort((a, b) => {
 				// Sort by path depth (fewer slashes = higher priority)
 				return a.split('/').length - b.split('/').length;
 			});
-			
-			console.log('Restoring folders in order:', sortedExpandedFolders);
-			
+
 			const newExpandedFolders = new Set(expandedFolders);
-			
+
 			// Restore folders sequentially to ensure parent folders are loaded first
 			for (const folderPath of sortedExpandedFolders) {
 				try {
 					const folder = findItemByPath(fileTree, folderPath);
 					if (folder) {
-						console.log('Reloading children for folder:', folderPath);
 						folder.children = await loadDirectory(folderPath);
 						fileTree = [...fileTree]; // Update the tree after each folder is loaded
 					} else {
 						// Folder no longer exists, remove from expanded folders
-						console.log('Folder no longer exists, removing from expanded:', folderPath);
 						newExpandedFolders.delete(folderPath);
 					}
 				} catch (error) {
@@ -242,34 +230,29 @@
 					newExpandedFolders.delete(folderPath);
 				}
 			}
-			
+
 			// Update expanded folders in parent if changed
 			if (newExpandedFolders.size !== expandedFolders.size) {
 				onExpandedFoldersChange(newExpandedFolders);
 			}
-			
-			console.log('File tree refresh completed');
-			console.log('Expanded folders after refresh:', Array.from(expandedFolders));
+
 		}, 100); // 100ms debounce
 	}
-	
+
 	// Helper function to restore expanded folders
 	async function restoreExpandedFolders() {
 		if (expandedFolders.size === 0) return;
-		
-		console.log('Starting to restore expanded folders:', Array.from(expandedFolders));
-		
+
 		// Sort folders by depth (parent folders first)
 		const sortedFolders = Array.from(expandedFolders).sort((a, b) => {
 			return a.split('/').length - b.split('/').length;
 		});
-		
+
 		// Sequential restoration to ensure parent folders are loaded first
 		for (const folderPath of sortedFolders) {
 			try {
 				const folder = findItemByPath(fileTree, folderPath);
 				if (folder && !folder.children) {
-					console.log('Restoring folder:', folderPath);
 					folder.children = await loadDirectory(folderPath);
 					fileTree = [...fileTree]; // Update tree after each folder
 				}
@@ -277,8 +260,6 @@
 				console.error('Error restoring folder:', folderPath, error);
 			}
 		}
-		
-		console.log('Finished restoring expanded folders');
 	}
 
 	// Method to expand a folder by path
@@ -287,9 +268,9 @@
 			const newExpandedFolders = new Set(expandedFolders);
 			newExpandedFolders.add(folderPath);
 			onExpandedFoldersChange(newExpandedFolders);
-			
+
 			// Load the directory content if needed
-			loadDirectory(folderPath).then(items => {
+			loadDirectory(folderPath).then((items) => {
 				const folder = findItemByPath(fileTree, folderPath);
 				if (folder) {
 					folder.children = items;
@@ -298,13 +279,13 @@
 			});
 		}
 	}
-	
+
 	// Method to navigate to a file and expand its parent directories
 	export function navigateToFile(filePath) {
 		// Get the directory path of the file
 		const pathParts = filePath.split('/');
 		const fileName = pathParts.pop();
-		
+
 		// Expand all parent directories
 		let currentPath = '';
 		for (const part of pathParts) {
@@ -314,14 +295,13 @@
 			}
 		}
 	}
-	
+
 	// Track previous rootPath to detect actual changes
 	let previousRootPath = $state(rootPath);
-	
+
 	// React to rootPath changes
 	$effect(() => {
 		if (rootPath && rootPath !== previousRootPath) {
-			console.log('FileTree: rootPath changed from', previousRootPath, 'to', rootPath);
 			// Clear cache and state when root path changes
 			directoryCache.clear();
 			// Clear expanded folders when root path changes
@@ -330,7 +310,6 @@
 			previousRootPath = rootPath;
 		} else if (rootPath && !previousRootPath) {
 			// Handle case where rootPath becomes available for the first time
-			console.log('FileTree: rootPath became available:', rootPath);
 			loadFileTree();
 			previousRootPath = rootPath;
 		}
@@ -341,27 +320,23 @@
 	onMount(async () => {
 		// Don't load if rootPath is not set
 		if (!rootPath) {
-			console.log('FileTree: rootPath not set, skipping initial load');
 			return;
 		}
-		
-		console.log('FileTree onMount: expandedFolders received:', Array.from(expandedFolders));
-		
+
 		await loadFileTree();
-		
+
 		// If there are expanded folders, restore them
 		if (expandedFolders.size > 0) {
-			console.log('Restoring expanded folders on mount:', Array.from(expandedFolders));
 			await restoreExpandedFolders();
 		}
-		
+
 		// Close context menu when clicking outside
 		function handleClickOutside(event) {
 			if (contextMenu && !event.target.closest('.context-menu')) {
 				closeContextMenu();
 			}
 		}
-		
+
 		document.addEventListener('click', handleClickOutside);
 		return () => document.removeEventListener('click', handleClickOutside);
 	});
@@ -369,50 +344,60 @@
 
 <div class="file-tree">
 	<!-- New Folder Button -->
-	<div class="new-folder-button border-b border-gray-200 p-2 mb-2">
-		<button 
+	<div class="new-folder-button mb-2 border-b border-gray-200 p-2">
+		<button
 			type="button"
-			class="w-full flex items-center gap-2 px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 rounded transition-colors cursor-pointer border border-gray-300 bg-white shadow-sm hover:shadow-md active:shadow-sm"
+			class="flex w-full cursor-pointer items-center gap-2 rounded border border-gray-300 bg-white px-3 py-2 text-left text-sm text-gray-700 shadow-sm transition-colors hover:bg-gray-100 hover:shadow-md active:shadow-sm"
 			onclick={() => handleContextMenuAction('create_folder_root')}
 		>
-			<svg class="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
-				<path d="M2 6a2 2 0 012-2h4l2 2h4a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"/>
+			<svg class="h-4 w-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+				<path d="M2 6a2 2 0 012-2h4l2 2h4a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
 			</svg>
 			<span>New Rootfolder</span>
 		</button>
 	</div>
-	
+
 	<!-- Recent Files Section -->
 	{#if recentFilesCount > 0 && recentFiles.length > 0}
-		<div class="recent-files-section border-b border-gray-200 mb-2">
-			<div class="px-2 py-1 text-xs font-semibold text-gray-600 uppercase tracking-wider">
-				Recent Files ({recentFiles.length}) - Max: {recentFilesCount}
+		<div class="recent-files-section mb-2 border-b border-gray-200">
+			<div class="px-2 py-1 text-xs font-semibold tracking-wider text-gray-600 uppercase">
+				Recent Files
 			</div>
 			<div class="px-2 pb-2">
 				{#each recentFiles.slice(0, recentFilesCount) as recentFile}
 					<div
-						class="flex items-center gap-2 {spacingConfig.verticalPadding} {spacingConfig.horizontalPadding} rounded hover:bg-gray-100 cursor-pointer group"
+						class="flex items-center gap-2 {spacingConfig.verticalPadding} {spacingConfig.horizontalPadding} group cursor-pointer rounded hover:bg-gray-100"
 						onclick={() => onRecentFileSelect(recentFile)}
 					>
-						<svg class="{spacingConfig.iconSize} text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+						<svg
+							class="{spacingConfig.iconSize} flex-shrink-0 text-blue-500"
+							fill="none"
+							stroke="currentColor"
+							viewBox="0 0 24 24"
+						>
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+							/>
 						</svg>
 						<span class="flex-1 truncate {spacingConfig.fontSize} text-gray-900 dark:text-gray-100">
-							{recentFile?.name || 'No name'}
+							{recentFile.name}
 						</span>
 						<span class="text-xs text-gray-400 opacity-0 group-hover:opacity-100">
-							{recentFile?.timestamp ? new Date(recentFile.timestamp).toLocaleTimeString() : 'No time'}
+							{new Date(recentFile.timestamp).toLocaleTimeString()}
 						</span>
 					</div>
 				{/each}
 			</div>
 		</div>
 	{/if}
-	
+
 	<!-- Pinned Files Section -->
 	{#if pinnedFilesInTree.length > 0}
-		<div class="pinned-files-section border-b border-gray-200 mb-2">
-			<div class="px-2 py-1 text-xs font-semibold text-gray-600 uppercase tracking-wider">
+		<div class="pinned-files-section mb-2 border-b border-gray-200">
+			<div class="px-2 py-1 text-xs font-semibold tracking-wider text-gray-600 uppercase">
 				Pinned Files
 			</div>
 			<div class="px-2 pb-2">
@@ -422,22 +407,20 @@
 			</div>
 		</div>
 	{/if}
-	
+
 	{#each fileTree as item}
 		{@render renderTreeItem(item, 0)}
 	{/each}
-	
+
 	{#if fileTree.length === 0}
-		<div class="text-gray-500 p-4 {spacingConfig.fontSize}">
-			No markdown files found
-		</div>
+		<div class="p-4 text-gray-500 {spacingConfig.fontSize}">No markdown files found</div>
 	{/if}
 </div>
 
 {#snippet renderTreeItem(item, depth)}
 	<div class="file-item-container">
 		<div
-			class="file-item group flex items-center hover:bg-gray-200 cursor-pointer select-none {spacingConfig.verticalPadding} {spacingConfig.horizontalPadding}"
+			class="file-item group flex cursor-pointer items-center select-none hover:bg-gray-200 {spacingConfig.verticalPadding} {spacingConfig.horizontalPadding}"
 			class:expanded={item.type === 'directory' && expandedFolders.has(item.path)}
 			class:active-file={item.type === 'file' && item.path === activeFilePath}
 			style="padding-left: {depth * spacingConfig.indentSize + 8}px"
@@ -445,16 +428,16 @@
 			oncontextmenu={(e) => handleContextMenu(e, item)}
 		>
 			{#if item.type === 'directory'}
-				<span class="mr-2 text-gray-500 arrow-indicator {spacingConfig.fontSize}">
+				<span class="arrow-indicator mr-2 text-gray-500 {spacingConfig.fontSize}">
 					{#if expandedFolders.has(item.path)}
 						<!-- Down arrow -->
 						<svg class="{spacingConfig.iconSize} inline" fill="currentColor" viewBox="0 0 12 12">
-							<path d="M2 4 L6 8 L10 4 Z"/>
+							<path d="M2 4 L6 8 L10 4 Z" />
 						</svg>
 					{:else}
 						<!-- Right arrow -->
 						<svg class="{spacingConfig.iconSize} inline" fill="currentColor" viewBox="0 0 12 12">
-							<path d="M4 2 L8 6 L4 10 Z"/>
+							<path d="M4 2 L8 6 L4 10 Z" />
 						</svg>
 					{/if}
 				</span>
@@ -462,12 +445,16 @@
 					{#if expandedFolders.has(item.path)}
 						<!-- Open folder icon -->
 						<svg class="{spacingConfig.iconSize} inline" fill="currentColor" viewBox="0 0 20 20">
-							<path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4l2 2h4a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd"/>
+							<path
+								fill-rule="evenodd"
+								d="M2 6a2 2 0 012-2h4l2 2h4a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"
+								clip-rule="evenodd"
+							/>
 						</svg>
 					{:else}
 						<!-- Closed folder icon -->
 						<svg class="{spacingConfig.iconSize} inline" fill="currentColor" viewBox="0 0 20 20">
-							<path d="M2 6a2 2 0 012-2h4l2 2h4a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"/>
+							<path d="M2 6a2 2 0 012-2h4l2 2h4a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
 						</svg>
 					{/if}
 				</span>
@@ -475,16 +462,20 @@
 				<span class="mr-2 text-gray-600" style="margin-left: {spacingConfig.indentSize}px">
 					<!-- Document icon -->
 					<svg class="{spacingConfig.iconSize} inline" fill="currentColor" viewBox="0 0 20 20">
-						<path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"/>
+						<path
+							fill-rule="evenodd"
+							d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z"
+							clip-rule="evenodd"
+						/>
 					</svg>
 				</span>
 			{/if}
 			<span class="text-gray-800 {spacingConfig.fontSize} flex-1">{item.name}</span>
-			
+
 			<!-- Pin/Unpin icon for files -->
 			{#if item.type === 'file'}
-				<button 
-					class="pin-button ml-2 p-1 rounded hover:bg-gray-300 opacity-0 group-hover:opacity-100 transition-opacity"
+				<button
+					class="pin-button ml-2 rounded p-1 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-gray-300"
 					onclick={(e) => {
 						e.stopPropagation();
 						if (pinnedFiles.has(item.path)) {
@@ -497,19 +488,31 @@
 				>
 					{#if pinnedFiles.has(item.path)}
 						<!-- Unpin icon (filled pin) -->
-						<svg class="w-3 h-3 text-orange-500" fill="currentColor" viewBox="0 0 24 24">
-							<path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+						<svg class="h-3 w-3 text-orange-500" fill="currentColor" viewBox="0 0 24 24">
+							<path
+								d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+							/>
 						</svg>
 					{:else}
 						<!-- Pin icon (outline pin) -->
-						<svg class="w-3 h-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+						<svg
+							class="h-3 w-3 text-gray-500"
+							fill="none"
+							stroke="currentColor"
+							viewBox="0 0 24 24"
+						>
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+							/>
 						</svg>
 					{/if}
 				</button>
 			{/if}
 		</div>
-		
+
 		{#if item.type === 'directory' && expandedFolders.has(item.path) && item.children}
 			{#each item.children as child}
 				{@render renderTreeItem(child, depth + 1)}
@@ -521,20 +524,24 @@
 {#snippet renderPinnedFile(item)}
 	<div class="file-item-container">
 		<div
-			class="file-item group flex items-center hover:bg-blue-50 cursor-pointer select-none {spacingConfig.verticalPadding} {spacingConfig.horizontalPadding} rounded mb-1"
+			class="file-item group flex cursor-pointer items-center select-none hover:bg-blue-50 {spacingConfig.verticalPadding} {spacingConfig.horizontalPadding} mb-1 rounded"
 			onclick={() => handleItemClick(item)}
 		>
 			<span class="mr-2 text-gray-600">
 				<!-- Document icon -->
 				<svg class="{spacingConfig.iconSize} inline" fill="currentColor" viewBox="0 0 20 20">
-					<path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"/>
+					<path
+						fill-rule="evenodd"
+						d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z"
+						clip-rule="evenodd"
+					/>
 				</svg>
 			</span>
 			<span class="text-gray-800 {spacingConfig.fontSize} flex-1">{item.name}</span>
-			
+
 			<!-- Unpin icon -->
-			<button 
-				class="pin-button ml-2 p-1 rounded hover:bg-gray-300 opacity-0 group-hover:opacity-100 transition-opacity"
+			<button
+				class="pin-button ml-2 rounded p-1 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-gray-300"
 				onclick={(e) => {
 					e.stopPropagation();
 					onUnpinFile(item);
@@ -542,8 +549,10 @@
 				title="Unpin file"
 			>
 				<!-- Unpin icon (filled pin) -->
-				<svg class="w-3 h-3 text-orange-500" fill="currentColor" viewBox="0 0 24 24">
-					<path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+				<svg class="h-3 w-3 text-orange-500" fill="currentColor" viewBox="0 0 24 24">
+					<path
+						d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+					/>
 				</svg>
 			</button>
 		</div>
@@ -553,32 +562,32 @@
 <!-- Context Menu -->
 {#if contextMenu}
 	<div
-		class="context-menu fixed bg-white border border-gray-300 rounded shadow-lg py-1 z-50"
+		class="context-menu fixed z-50 rounded border border-gray-300 bg-white py-1 shadow-lg"
 		style="left: {contextMenuPos.x}px; top: {contextMenuPos.y}px;"
 	>
 		{#if contextMenu.type === 'directory'}
 			<button
-				class="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+				class="w-full px-4 py-2 text-left text-sm hover:bg-gray-100"
 				onclick={() => handleContextMenuAction('create_file')}
 			>
 				Add Document
 			</button>
 			<button
-				class="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+				class="w-full px-4 py-2 text-left text-sm hover:bg-gray-100"
 				onclick={() => handleContextMenuAction('create_folder')}
 			>
 				Add Folder
 			</button>
-			<hr class="my-1">
+			<hr class="my-1" />
 			<button
-				class="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 text-red-600"
+				class="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-100"
 				onclick={() => handleContextMenuAction('delete')}
 			>
 				Delete
 			</button>
 		{:else}
 			<button
-				class="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 text-red-600"
+				class="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-100"
 				onclick={() => handleContextMenuAction('delete')}
 			>
 				Delete
@@ -591,119 +600,119 @@
 	.file-tree {
 		user-select: none;
 	}
-	
+
 	.file-item:hover {
 		background-color: #f3f4f6;
 	}
-	
+
 	.file-item.active-file {
 		background-color: #3b82f6;
 		color: white;
 	}
-	
+
 	.file-item.active-file:hover {
 		background-color: #2563eb;
 	}
-	
+
 	:global(.dark) .file-item:hover {
 		background-color: var(--bg-tertiary);
 	}
-	
+
 	:global(.dark) .file-item.active-file {
 		background-color: #1d4ed8;
 		color: white;
 	}
-	
+
 	:global(.dark) .file-item.active-file:hover {
 		background-color: #1e40af;
 	}
-	
+
 	:global(.dark) .file-item:hover .text-gray-800 {
 		color: var(--text-primary);
 	}
-	
+
 	.context-menu {
 		min-width: 120px;
 	}
-	
+
 	:global(.dark) .context-menu {
 		background-color: var(--bg-primary);
 		border-color: var(--border-color);
 		color: var(--text-primary);
 	}
-	
+
 	:global(.dark) .context-menu button:hover {
 		background-color: var(--bg-secondary);
 	}
-	
+
 	/* Fix directory icons in dark mode */
 	:global(.dark) .file-item span {
 		background-color: transparent !important;
 		color: inherit !important;
 	}
-	
+
 	/* More specific targeting for emoji spans */
 	:global(.dark) .file-item span:first-child,
 	:global(.dark) .file-item span:nth-child(2) {
 		background-color: transparent !important;
 		background: none !important;
 	}
-	
+
 	/* Dark mode colors for icons */
 	:global(.dark) .file-item .text-blue-500 {
 		color: #60a5fa !important;
 	}
-	
+
 	:global(.dark) .file-item .text-gray-600 {
 		color: #d1d5db !important;
 	}
-	
+
 	:global(.dark) .file-item .text-gray-500 {
 		color: #9ca3af !important;
 	}
-	
+
 	/* Fix arrow indicator backgrounds */
 	.arrow-indicator {
 		background-color: transparent !important;
 		background: none !important;
 		color: inherit !important;
 	}
-	
+
 	.arrow-indicator svg {
 		background-color: transparent !important;
 		background: none !important;
 	}
-	
+
 	/* More specific targeting for arrow indicators */
 	.file-item .text-xs {
 		background-color: transparent !important;
 		background: none !important;
 		color: inherit !important;
 	}
-	
+
 	:global(.dark) .file-item .text-xs {
 		background-color: transparent !important;
 		background: none !important;
 		color: inherit !important;
 	}
-	
+
 	:global(.dark) .arrow-indicator {
 		background-color: transparent !important;
 		background: none !important;
 		color: inherit !important;
 	}
-	
+
 	/* Dark mode support for new folder button */
 	:global(.dark) .new-folder-button {
 		border-color: var(--border-color);
 	}
-	
+
 	:global(.dark) .new-folder-button button {
 		color: var(--text-primary);
 		background-color: var(--bg-primary);
 		border-color: var(--border-color);
 	}
-	
+
 	:global(.dark) .new-folder-button button:hover {
 		background-color: var(--bg-secondary);
 		border-color: var(--border-color);

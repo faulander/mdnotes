@@ -5,12 +5,14 @@ This document explains how to run Markdown Notes using Docker for easy deploymen
 ## Quick Start
 
 1. **Clone the repository**
+
    ```bash
    git clone <repository-url>
    cd mdnotes
    ```
 
 2. **Run the setup script**
+
    ```bash
    ./docker-setup.sh
    ```
@@ -28,11 +30,13 @@ This document explains how to run Markdown Notes using Docker for easy deploymen
 ### Steps
 
 1. **Build the Docker image**
+
    ```bash
    docker-compose build
    ```
 
 2. **Start the application**
+
    ```bash
    docker-compose up -d
    ```
@@ -48,15 +52,15 @@ This document explains how to run Markdown Notes using Docker for easy deploymen
 
 Copy `.env.example` to `.env` and customize:
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `NODE_ENV` | Application environment | `production` |
-| `PORT` | Port to run the application | `3000` |
-| `NOTES_DIR` | Directory for markdown files | `/app/notes` |
-| `DATA_DIR` | Directory for app data | `/app/data` |
-| `DEBUG` | Enable debug logging | `false` |
-| `MAX_FILE_SIZE` | Maximum file size (bytes) | `10485760` |
-| `ALLOWED_EXTENSIONS` | Allowed file extensions | `.md,.txt,.markdown` |
+| Variable             | Description                  | Default              |
+| -------------------- | ---------------------------- | -------------------- |
+| `NODE_ENV`           | Application environment      | `production`         |
+| `PORT`               | Port to run the application  | `3000`               |
+| `NOTES_DIR`          | Directory for markdown files | `/app/notes`         |
+| `DATA_DIR`           | Directory for app data       | `/app/data`          |
+| `DEBUG`              | Enable debug logging         | `false`              |
+| `MAX_FILE_SIZE`      | Maximum file size (bytes)    | `10485760`           |
+| `ALLOWED_EXTENSIONS` | Allowed file extensions      | `.md,.txt,.markdown` |
 
 ### Volumes
 
@@ -144,6 +148,7 @@ docker run --rm -v mdnotes-data:/data -v $(pwd):/backup alpine tar -xzf /backup/
 ### Common Issues
 
 1. **Port already in use**
+
    ```bash
    # Change port in docker-compose.yml
    ports:
@@ -151,25 +156,28 @@ docker run --rm -v mdnotes-data:/data -v $(pwd):/backup alpine tar -xzf /backup/
    ```
 
 2. **Permission issues**
+
    ```bash
    # Fix ownership of notes directory
    sudo chown -R $(id -u):$(id -g) notes/
    ```
 
 3. **Container won't start**
+
    ```bash
    # Check logs
    docker-compose logs mdnotes
-   
+
    # Rebuild image
    docker-compose build --no-cache
    ```
 
 4. **Lost data**
+
    ```bash
    # Check if volume exists
    docker volume ls | grep mdnotes-data
-   
+
    # Inspect volume
    docker volume inspect mdnotes-data
    ```
@@ -202,7 +210,7 @@ For production deployments:
 server {
     listen 80;
     server_name your-domain.com;
-    
+
     location / {
         proxy_pass http://localhost:3000;
         proxy_set_header Host $host;

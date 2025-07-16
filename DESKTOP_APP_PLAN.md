@@ -7,7 +7,9 @@ This document outlines the plan to convert the Markdown Notes web application in
 ## Technology Comparison
 
 ### Option 1: Electron
+
 **Pros:**
+
 - Mature ecosystem with extensive documentation
 - Large community and plugin ecosystem
 - Easy to package and distribute
@@ -16,13 +18,16 @@ This document outlines the plan to convert the Markdown Notes web application in
 - Existing SvelteKit integration examples
 
 **Cons:**
+
 - Larger bundle size (~100-150MB)
 - Higher memory usage
 - Security considerations with Node.js access
 - Chromium dependency
 
 ### Option 2: Tauri
+
 **Pros:**
+
 - Smaller bundle size (~10-20MB)
 - Better performance and memory efficiency
 - Rust-based backend for security
@@ -31,6 +36,7 @@ This document outlines the plan to convert the Markdown Notes web application in
 - Growing ecosystem
 
 **Cons:**
+
 - Newer technology, smaller community
 - Learning curve for Rust APIs
 - Limited plugin ecosystem
@@ -39,12 +45,14 @@ This document outlines the plan to convert the Markdown Notes web application in
 ## Recommended Choice: Hybrid Approach (Web App + Tauri Desktop)
 
 **Recommendation:** Maintain both web app and Tauri desktop app from a single codebase because:
+
 1. **Best of both worlds:** Web accessibility + native performance
 2. **Single codebase:** Shared UI components and logic
 3. **User choice:** Users can choose their preferred platform
 4. **Progressive enhancement:** Features adapt to platform capabilities
 
 ### Why Tauri for Desktop:
+
 1. **Size matters:** Markdown editor should be lightweight (~15MB vs ~150MB)
 2. **Security:** File system access with better sandboxing
 3. **Performance:** Better for text editing and file operations
@@ -53,6 +61,7 @@ This document outlines the plan to convert the Markdown Notes web application in
 ## Hybrid Architecture Strategy
 
 ### Target Architecture
+
 ```
 Shared Frontend (SvelteKit)
 ├── Web App (with API backend)
@@ -70,85 +79,91 @@ The key to maintaining both versions is creating an abstraction layer:
 ```javascript
 // src/lib/api/interface.js
 export class ApiInterface {
-  async listFiles(rootPath, path) {
-    throw new Error('Must be implemented by subclass');
-  }
-  
-  async readFile(filePath) {
-    throw new Error('Must be implemented by subclass');
-  }
-  
-  async writeFile(filePath, content) {
-    throw new Error('Must be implemented by subclass');
-  }
+	async listFiles(rootPath, path) {
+		throw new Error('Must be implemented by subclass');
+	}
+
+	async readFile(filePath) {
+		throw new Error('Must be implemented by subclass');
+	}
+
+	async writeFile(filePath, content) {
+		throw new Error('Must be implemented by subclass');
+	}
 }
 ```
 
 ### Web Implementation
+
 ```javascript
 // src/lib/api/web.js
 import { ApiInterface } from './interface.js';
 
 export class WebApi extends ApiInterface {
-  async listFiles(rootPath, path) {
-    const response = await fetch(`/api/files?root=${encodeURIComponent(rootPath)}&path=${encodeURIComponent(path)}`);
-    return await response.json();
-  }
-  
-  async readFile(filePath) {
-    const response = await fetch(`/api/files?path=${encodeURIComponent(filePath)}`);
-    return await response.json();
-  }
-  
-  async writeFile(filePath, content) {
-    const response = await fetch('/api/files', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'save_file', path: filePath, content })
-    });
-    return await response.json();
-  }
+	async listFiles(rootPath, path) {
+		const response = await fetch(
+			`/api/files?root=${encodeURIComponent(rootPath)}&path=${encodeURIComponent(path)}`
+		);
+		return await response.json();
+	}
+
+	async readFile(filePath) {
+		const response = await fetch(`/api/files?path=${encodeURIComponent(filePath)}`);
+		return await response.json();
+	}
+
+	async writeFile(filePath, content) {
+		const response = await fetch('/api/files', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ action: 'save_file', path: filePath, content })
+		});
+		return await response.json();
+	}
 }
 ```
 
 ### Tauri Implementation
+
 ```javascript
 // src/lib/api/tauri.js
 import { invoke } from '@tauri-apps/api/tauri';
 import { ApiInterface } from './interface.js';
 
 export class TauriApi extends ApiInterface {
-  async listFiles(rootPath, path) {
-    return await invoke('list_files', { rootPath, path });
-  }
-  
-  async readFile(filePath) {
-    return await invoke('read_file', { filePath });
-  }
-  
-  async writeFile(filePath, content) {
-    return await invoke('write_file', { filePath, content });
-  }
+	async listFiles(rootPath, path) {
+		return await invoke('list_files', { rootPath, path });
+	}
+
+	async readFile(filePath) {
+		return await invoke('read_file', { filePath });
+	}
+
+	async writeFile(filePath, content) {
+		return await invoke('write_file', { filePath, content });
+	}
 }
 ```
 
 ### Runtime Detection
+
 ```javascript
 // src/lib/api/factory.js
 import { WebApi } from './web.js';
 import { TauriApi } from './tauri.js';
 
 export function createApiClient() {
-  // Check if we're running in Tauri
-  if (typeof window !== 'undefined' && window.__TAURI__) {
-    return new TauriApi();
-  } else {
-    return new WebApi();
-  }
+	// Check if we're running in Tauri
+	if (typeof window !== 'undefined' && window.__TAURI__) {
+		return new TauriApi();
+	} else {
+		return new WebApi();
+	}
 }
 ```
 
 ### Project Structure
+
 ```
 markdown-notes/
 ├── src/                          # Shared frontend code
@@ -170,11 +185,12 @@ markdown-notes/
 ```
 
 ### Development Workflow
+
 ```bash
 # Web development
 npm run dev          # SvelteKit dev server with Node.js APIs
 
-# Desktop development  
+# Desktop development
 npm run tauri dev    # Tauri dev with Rust backend
 
 # Build web version
@@ -186,6 +202,7 @@ npm run tauri build  # Generates .exe, .deb, .dmg, etc.
 ```
 
 ### Benefits of Hybrid Approach
+
 - ✅ Single codebase for both platforms
 - ✅ Shared UI components and logic
 - ✅ Web app remains fully functional
@@ -194,6 +211,7 @@ npm run tauri build  # Generates .exe, .deb, .dmg, etc.
 - ✅ Progressive enhancement based on capabilities
 
 ### Trade-offs
+
 - 🔄 Need to maintain two backend implementations
 - 🔄 Testing required for both environments
 - 🔄 Some features might work differently (file system access)
@@ -204,12 +222,14 @@ npm run tauri build  # Generates .exe, .deb, .dmg, etc.
 ### Phase 0: Backend Abstraction (Week 0.5)
 
 #### 0.1 Create Abstraction Layer
+
 - [ ] Create `ApiInterface` abstract class
 - [ ] Implement `WebApi` class using existing API routes
 - [ ] Create `factory.js` for runtime detection
 - [ ] Update components to use abstracted API
 
 #### 0.2 Test Web Version
+
 - [ ] Ensure web version still works with abstraction
 - [ ] Verify all file operations work correctly
 - [ ] Test in both development and production builds
@@ -217,6 +237,7 @@ npm run tauri build  # Generates .exe, .deb, .dmg, etc.
 ### Phase 1: Tauri Setup and Basic Conversion (Week 1)
 
 #### 1.1 Environment Setup
+
 ```bash
 # Install Rust and Tauri CLI
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
@@ -227,6 +248,7 @@ cargo tauri init
 ```
 
 #### 1.2 Project Structure Changes
+
 ```
 src-tauri/          # Rust backend
 ├── src/
@@ -243,6 +265,7 @@ src/                # Frontend (unchanged)
 ```
 
 #### 1.3 Basic Migration Tasks
+
 - [ ] Configure `tauri.conf.json` for app metadata
 - [ ] Set up build pipeline for SvelteKit + Tauri
 - [ ] Create basic Rust backend structure
@@ -251,25 +274,29 @@ src/                # Frontend (unchanged)
 ### Phase 2: File System Integration (Week 2)
 
 #### 2.1 Replace Web APIs with Tauri APIs
+
 Replace current file operations with Tauri commands:
 
 **Current (Web):**
+
 ```javascript
 // src/routes/api/files/+server.js
 const response = await fetch('/api/files', { ... });
 ```
 
 **New (Tauri):**
+
 ```javascript
 // src/lib/api/files.js
 import { invoke } from '@tauri-apps/api/tauri';
 
 export async function listFiles(rootPath) {
-  return await invoke('list_files', { rootPath });
+	return await invoke('list_files', { rootPath });
 }
 ```
 
 #### 2.2 Rust Backend Commands
+
 ```rust
 // src-tauri/src/commands.rs
 #[tauri::command]
@@ -289,6 +316,7 @@ async fn write_file(file_path: String, content: String) -> Result<(), String> {
 ```
 
 #### 2.3 Migration Tasks
+
 - [ ] Create Tauri commands for all file operations
 - [ ] Replace API routes with Tauri invoke calls
 - [ ] Update FileTree component to use Tauri APIs
@@ -298,6 +326,7 @@ async fn write_file(file_path: String, content: String) -> Result<(), String> {
 ### Phase 3: Native Features Integration (Week 3)
 
 #### 3.1 Native Menu System
+
 ```rust
 // src-tauri/src/menu.rs
 use tauri::{Menu, MenuItem, Submenu};
@@ -317,6 +346,7 @@ pub fn create_menu() -> Menu {
 ```
 
 #### 3.2 System Integration Features
+
 - [ ] Native file dialogs for folder selection
 - [ ] System tray integration
 - [ ] Native notifications
@@ -325,6 +355,7 @@ pub fn create_menu() -> Menu {
 - [ ] Auto-updater setup
 
 #### 3.3 Enhanced Functionality
+
 - [ ] Global hotkeys for quick access
 - [ ] Window state persistence
 - [ ] Multiple window support
@@ -334,33 +365,35 @@ pub fn create_menu() -> Menu {
 ### Phase 4: Security and Performance (Week 4)
 
 #### 4.1 Security Configuration
+
 ```json
 // tauri.conf.json
 {
-  "tauri": {
-    "allowlist": {
-      "fs": {
-        "all": false,
-        "readFile": true,
-        "writeFile": true,
-        "readDir": true,
-        "createDir": true,
-        "removeFile": true,
-        "removeDir": true
-      },
-      "dialog": {
-        "open": true,
-        "save": true
-      },
-      "notification": {
-        "all": true
-      }
-    }
-  }
+	"tauri": {
+		"allowlist": {
+			"fs": {
+				"all": false,
+				"readFile": true,
+				"writeFile": true,
+				"readDir": true,
+				"createDir": true,
+				"removeFile": true,
+				"removeDir": true
+			},
+			"dialog": {
+				"open": true,
+				"save": true
+			},
+			"notification": {
+				"all": true
+			}
+		}
+	}
 }
 ```
 
 #### 4.2 Performance Optimizations
+
 - [ ] Bundle size optimization
 - [ ] Lazy loading for large file trees
 - [ ] Virtual scrolling for performance
@@ -370,18 +403,20 @@ pub fn create_menu() -> Menu {
 ### Phase 5: Distribution and Packaging (Week 5)
 
 #### 5.1 Build Configuration
+
 ```json
 // tauri.conf.json
 {
-  "bundle": {
-    "identifier": "com.faulander.markdownnotes",
-    "icon": ["icons/icon.icns", "icons/icon.ico"],
-    "targets": ["msi", "deb", "dmg", "appimage"]
-  }
+	"bundle": {
+		"identifier": "com.faulander.markdownnotes",
+		"icon": ["icons/icon.icns", "icons/icon.ico"],
+		"targets": ["msi", "deb", "dmg", "appimage"]
+	}
 }
 ```
 
 #### 5.2 Distribution Tasks
+
 - [ ] Icon design for all platforms
 - [ ] Code signing setup (Windows/macOS)
 - [ ] Auto-updater configuration
@@ -394,16 +429,18 @@ pub fn create_menu() -> Menu {
 ### 1. File System API Migration
 
 **Before (SvelteKit API routes):**
+
 ```javascript
 // src/routes/api/files/+server.js
 export async function GET({ url }) {
-  const rootPath = url.searchParams.get('root');
-  const entries = await fs.promises.readdir(rootPath);
-  return json({ items: entries });
+	const rootPath = url.searchParams.get('root');
+	const entries = await fs.promises.readdir(rootPath);
+	return json({ items: entries });
 }
 ```
 
 **After (Tauri commands):**
+
 ```rust
 // src-tauri/src/commands.rs
 #[tauri::command]
@@ -426,7 +463,7 @@ async fn list_files(root_path: String, path: String) -> Result<FileListResponse,
             }
         })
         .collect();
-    
+
     Ok(FileListResponse { items: entries })
 }
 ```
@@ -434,12 +471,14 @@ async fn list_files(root_path: String, path: String) -> Result<FileListResponse,
 ### 2. Settings Migration
 
 **Current (localStorage):**
+
 ```javascript
 // src/lib/stores/settings.js
 localStorage.setItem('markdown-notes-settings', JSON.stringify(settings));
 ```
 
 **New (Tauri app data):**
+
 ```rust
 // src-tauri/src/settings.rs
 use tauri::api::path;
@@ -459,25 +498,27 @@ async fn save_settings(settings: Settings) -> Result<(), String> {
 ### 3. Build Scripts
 
 **Package.json updates:**
+
 ```json
 {
-  "scripts": {
-    "dev": "tauri dev",
-    "build": "tauri build",
-    "tauri": "tauri"
-  },
-  "devDependencies": {
-    "@tauri-apps/cli": "^1.0.0"
-  },
-  "dependencies": {
-    "@tauri-apps/api": "^1.0.0"
-  }
+	"scripts": {
+		"dev": "tauri dev",
+		"build": "tauri build",
+		"tauri": "tauri"
+	},
+	"devDependencies": {
+		"@tauri-apps/cli": "^1.0.0"
+	},
+	"dependencies": {
+		"@tauri-apps/api": "^1.0.0"
+	}
 }
 ```
 
 ## Benefits of Desktop App
 
 ### For Users
+
 1. **Better Performance:** Native file system access
 2. **Offline First:** No need for local server
 3. **System Integration:** File associations, context menus
@@ -485,6 +526,7 @@ async fn save_settings(settings: Settings) -> Result<(), String> {
 5. **Native Feel:** Platform-specific UI elements
 
 ### For Developers
+
 1. **Simplified Distribution:** Single executable
 2. **No Server Required:** Eliminates Node.js server complexity
 3. **Better File Watching:** Native file system events
@@ -492,14 +534,14 @@ async fn save_settings(settings: Settings) -> Result<(), String> {
 
 ## Migration Timeline
 
-| Week | Focus | Deliverables |
-|------|-------|-------------|
-| 0.5 | Backend Abstraction | Web app with abstracted API layer |
-| 1 | Setup & Basic Conversion | Working Tauri app with basic UI |
-| 2 | File System Integration | All file operations working in both versions |
-| 3 | Native Features | Menus, dialogs, system integration |
-| 4 | Security & Performance | Optimized and secure apps |
-| 5 | Distribution | Packaged apps for all platforms + web deployment |
+| Week | Focus                    | Deliverables                                     |
+| ---- | ------------------------ | ------------------------------------------------ |
+| 0.5  | Backend Abstraction      | Web app with abstracted API layer                |
+| 1    | Setup & Basic Conversion | Working Tauri app with basic UI                  |
+| 2    | File System Integration  | All file operations working in both versions     |
+| 3    | Native Features          | Menus, dialogs, system integration               |
+| 4    | Security & Performance   | Optimized and secure apps                        |
+| 5    | Distribution             | Packaged apps for all platforms + web deployment |
 
 ## Post-Migration Features
 
@@ -515,12 +557,14 @@ After successful migration, consider these desktop-specific features:
 ## Platform-Specific Features
 
 ### Web App Exclusive Features
+
 - **Easy Sharing:** Send links to notes (with backend implementation)
 - **No Installation:** Access from any browser
 - **Cloud Deployment:** Host on Vercel, Netlify, etc.
 - **Cross-Device Access:** Same interface everywhere
 
 ### Desktop App Exclusive Features
+
 - **Native File Associations:** Double-click .md files to open
 - **System Tray Integration:** Background operation
 - **Global Hotkeys:** Quick access shortcuts
@@ -529,6 +573,7 @@ After successful migration, consider these desktop-specific features:
 - **Native Dialogs:** Platform-specific file pickers
 
 ### Progressive Enhancement Examples
+
 ```javascript
 // Feature detection in components
 const isDesktop = typeof window !== 'undefined' && window.__TAURI__;
@@ -550,6 +595,7 @@ const defaultSettings = {
 ## Deployment Strategy
 
 ### Web App Deployment
+
 ```bash
 # Production build for web
 npm run build
@@ -561,6 +607,7 @@ netlify deploy
 ```
 
 ### Desktop App Distribution
+
 ```bash
 # Build for all platforms
 npm run tauri build
@@ -572,6 +619,7 @@ npm run tauri build
 ```
 
 ### Continuous Integration
+
 ```yaml
 # .github/workflows/build.yml
 name: Build and Deploy
@@ -587,7 +635,7 @@ jobs:
       - run: npm install
       - run: npm run build
       - run: npm run test
-      
+
   desktop-build:
     strategy:
       matrix:
@@ -606,16 +654,19 @@ jobs:
 The hybrid approach provides the best of both worlds:
 
 ### For Users:
+
 - **Choice:** Web browser or native desktop app
 - **Consistency:** Same interface and features across platforms
 - **Performance:** Native speed on desktop, web accessibility everywhere
 
 ### For Developers:
+
 - **Single Codebase:** Maintain one UI codebase
 - **Incremental Migration:** Add desktop features without breaking web version
 - **Future-Proof:** Easy to add platform-specific enhancements
 
 ### Migration Benefits:
+
 - **No Breaking Changes:** Web app continues to work during migration
 - **Beta Testing:** Desktop app can be tested alongside web version
 - **Gradual Rollout:** Users can migrate at their own pace

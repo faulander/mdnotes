@@ -7,6 +7,8 @@ A local-first markdown note-taking application built with SvelteKit and Tailwind
 ### 📁 File Management
 
 - **File Explorer Sidebar**: Navigate through your markdown files and folders
+- **Recent Files**: Quick access to recently opened files at the top of the sidebar
+- **Pinned Files**: Pin frequently used files for easy access
 - **Context Menu Operations**: Right-click to create, rename, or delete files and folders
 - **Drag-to-Resize Sidebar**: Adjust the sidebar width to your preference (200px - 500px)
 - **Persistent Folder State**: Expanded folders remain open when toggling the sidebar
@@ -15,6 +17,7 @@ A local-first markdown note-taking application built with SvelteKit and Tailwind
 
 - **Tabbed Interface**: Open multiple documents simultaneously
 - **Split View**: Toggle between editor and preview modes
+- **Formatting Toolbar**: Quick access to common markdown formatting options
 - **Syntax Highlighting**: Markdown syntax highlighting in the editor
 - **Line Wrapping**: No horizontal scrolling - text wraps naturally
 - **Unsaved Changes Indicator**: Visual indicator (●) shows unsaved changes in tabs
@@ -35,6 +38,7 @@ A local-first markdown note-taking application built with SvelteKit and Tailwind
 
 - **Root Directory**: Choose your notes folder location
 - **Editor Preferences**: Customize font size and font family
+- **Interface Options**: Configure toolbar visibility, file tree spacing, and recent files count
 - **Auto-save**: Optional automatic saving with configurable delay
 - **Behavior Options**: Configure confirmation dialogs and other preferences
 
@@ -76,6 +80,27 @@ npm run build
 npm run preview
 ```
 
+### Docker Deployment
+
+For easy deployment with Docker:
+
+1. **Quick setup with Docker**
+
+   ```bash
+   ./docker-setup.sh
+   ```
+
+2. **Manual Docker setup**
+
+   ```bash
+   docker-compose up -d
+   ```
+
+3. **Access the application**
+   Navigate to `http://localhost:3000`
+
+Your notes will be stored in the `./notes` directory, and settings are persisted in a Docker volume. See [DOCKER.md](DOCKER.md) for detailed Docker documentation.
+
 ## Usage Guide
 
 ### Getting Started
@@ -103,14 +128,24 @@ npm run preview
 #### Managing Files
 
 - **Open File**: Click on any `.md` file in the sidebar
+- **Recent Files**: Access recently opened files from the top of the sidebar
+- **Pin Files**: Hover over files in the tree and click the pin icon for quick access
 - **Delete**: Right-click on file/folder → "Delete"
 - **Navigate**: Click folder arrows to expand/collapse directories
+
+#### Recent Files Feature
+
+- **Quick Access**: Recently opened files appear at the top of the sidebar
+- **Configurable Count**: Set how many recent files to show (0-10) in Settings
+- **Auto-Navigation**: Clicking a recent file automatically expands the tree to show its location
+- **Order Preservation**: Recent files maintain their chronological order when accessed
 
 ### Editor Features
 
 #### Writing and Editing
 
 - The editor provides syntax highlighting for markdown
+- **Formatting Toolbar**: Quick access to headings, bold, italic, lists, links, and more
 - Text automatically wraps - no horizontal scrolling
 - Unsaved changes are indicated with an orange dot (●) in the tab
 
@@ -139,6 +174,9 @@ npm run preview
 
 - **Font Size**: Adjust from 8px to 24px
 - **Font Family**: Choose your preferred monospace font
+- **Toolbar Visibility**: Show/hide the formatting toolbar
+- **Recent Files Count**: Configure how many recent files to display (0-10)
+- **File Tree Spacing**: Choose between compact, normal, or comfortable spacing
 - **Auto-save**: Enable automatic saving with customizable delay
 
 ## Development
@@ -402,3 +440,7 @@ MIT License - see [LICENSE](LICENSE) file for details.
 - ✅ Keyboard shortcuts
 - ✅ Persistent folder states
 - ✅ Auto-save functionality
+- ✅ Recent files section with configurable count
+- ✅ Pinned files for quick access
+- ✅ Formatting toolbar with markdown shortcuts
+- ✅ Docker containerization support

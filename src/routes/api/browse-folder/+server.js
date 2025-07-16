@@ -4,17 +4,17 @@ import { json } from '@sveltejs/kit';
 
 export async function GET({ url }) {
 	const currentPath = url.searchParams.get('path') || process.cwd();
-	
+
 	try {
 		// Ensure the path exists and is a directory
 		const stats = await fs.promises.stat(currentPath);
 		if (!stats.isDirectory()) {
 			return json({ error: 'Path is not a directory' }, { status: 400 });
 		}
-		
+
 		const entries = await fs.promises.readdir(currentPath, { withFileTypes: true });
 		const folders = [];
-		
+
 		// Get parent directory (if not root)
 		const parentPath = path.dirname(currentPath);
 		if (parentPath !== currentPath) {
@@ -24,7 +24,7 @@ export async function GET({ url }) {
 				isParent: true
 			});
 		}
-		
+
 		// Get all directories
 		for (const entry of entries) {
 			if (entry.isDirectory()) {
@@ -36,7 +36,7 @@ export async function GET({ url }) {
 				});
 			}
 		}
-		
+
 		return json({
 			currentPath,
 			folders: folders.sort((a, b) => {

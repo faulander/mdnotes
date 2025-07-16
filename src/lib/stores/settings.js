@@ -21,12 +21,12 @@ const defaultSettings = {
 // Create settings store
 function createSettingsStore() {
 	const { subscribe, set, update } = writable(defaultSettings);
-	
+
 	return {
 		subscribe,
 		set,
 		update,
-		
+
 		// Load settings from localStorage
 		load() {
 			if (typeof window !== 'undefined') {
@@ -45,7 +45,7 @@ function createSettingsStore() {
 			}
 			return defaultSettings;
 		},
-		
+
 		// Save settings to localStorage
 		save(settings) {
 			if (typeof window !== 'undefined') {
@@ -53,10 +53,10 @@ function createSettingsStore() {
 			}
 			set(settings);
 		},
-		
+
 		// Update a specific setting
 		updateSetting(key, value) {
-			update(settings => {
+			update((settings) => {
 				const newSettings = { ...settings, [key]: value };
 				if (typeof window !== 'undefined') {
 					localStorage.setItem('markdown-notes-settings', JSON.stringify(newSettings));
@@ -64,7 +64,7 @@ function createSettingsStore() {
 				return newSettings;
 			});
 		},
-		
+
 		// Reset to defaults
 		reset() {
 			if (typeof window !== 'undefined') {

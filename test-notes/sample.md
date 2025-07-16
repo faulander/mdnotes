@@ -15,10 +15,10 @@ This is a sample markdown file to demonstrate the note-taking app functionality.
 
 ```javascript
 function greet(name) {
-    return `Hello, ${name}!`;
+	return `Hello, ${name}!`;
 }
 
-console.log(greet("World"));
+console.log(greet('World'));
 ```
 
 ## Task List
@@ -36,4 +36,4 @@ console.log(greet("World"));
 
 > This is a blockquote example.
 
-**Bold text** and *italic text* work perfectly.
+**Bold text** and _italic text_ work perfectly.

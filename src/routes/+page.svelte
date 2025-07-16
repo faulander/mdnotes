@@ -8,7 +8,7 @@
 	import { FileWatcher } from '$lib/fileWatcher.js';
 	import { settings } from '$lib/stores/settings.js';
 	import { applyTheme, watchSystemTheme } from '$lib/theme.js';
-	
+
 	let sidebarVisible = $state(true);
 	let openTabs = $state([]);
 	let activeTab = $state(null);
@@ -30,11 +30,9 @@
 	let expandedFolders = $state(new Set());
 	let pinnedFiles = $state(new Set());
 	let recentFiles = $state([]);
-	
+
 	function toggleSidebar() {
-		console.log('Toggling sidebar. Current expanded folders:', Array.from(expandedFolders));
 		sidebarVisible = !sidebarVisible;
-		console.log('Sidebar visible:', sidebarVisible);
 	}
 
 	function startResize(event) {
@@ -42,11 +40,11 @@
 		isResizing = true;
 		const startX = event.clientX;
 		const startWidth = sidebarWidth;
-		
+
 		// Prevent text selection while dragging
 		document.body.style.userSelect = 'none';
 		document.body.style.cursor = 'col-resize';
-		
+
 		function handleMouseMove(e) {
 			if (!isResizing) return;
 			e.preventDefault();
@@ -54,7 +52,7 @@
 			const newWidth = Math.max(200, Math.min(500, startWidth + deltaX));
 			sidebarWidth = newWidth;
 		}
-		
+
 		function handleMouseUp() {
 			isResizing = false;
 			document.body.style.userSelect = '';
@@ -62,11 +60,11 @@
 			document.removeEventListener('mousemove', handleMouseMove);
 			document.removeEventListener('mouseup', handleMouseUp);
 		}
-		
+
 		document.addEventListener('mousemove', handleMouseMove);
 		document.addEventListener('mouseup', handleMouseUp);
 	}
-	
+
 	function handleKeydown(event) {
 		try {
 			if (event.ctrlKey || event.metaKey) {
@@ -75,8 +73,7 @@
 					toggleSidebar();
 				} else if (event.key === 's') {
 					event.preventDefault();
-					console.log('Ctrl+S pressed, calling saveCurrentFile');
-					saveCurrentFile().catch(error => {
+					saveCurrentFile().catch((error) => {
 						console.error('Error in saveCurrentFile:', error);
 					});
 				} else if (event.key === 'E' && event.shiftKey) {
@@ -88,21 +85,12 @@
 			console.error('Error in handleKeydown:', error);
 		}
 	}
-	
+
 	async function saveCurrentFile() {
-		console.log('=== SAVE FUNCTION CALLED ===');
-		console.log('Active tab:', activeTab);
-		console.log('Open tabs:', openTabs);
-		
 		if (!activeTab) {
-			console.log('No active tab to save');
 			return;
 		}
-		
-		console.log('Saving file:', activeTab.path, 'hasUnsavedChanges:', activeTab.hasUnsavedChanges);
-		console.log('Content length:', activeTab.content.length);
-		console.log('Original content length:', activeTab.originalContent.length);
-		
+
 		try {
 			const response = await fetch('/api/files', {
 				method: 'POST',
@@ -114,25 +102,19 @@
 					rootPath
 				})
 			});
-			
-			console.log('Save response status:', response.status);
-			
+
 			if (response.ok) {
-				console.log('Save successful, updating tab state');
 				activeTab.hasUnsavedChanges = false;
 				// Normalize the content when saving to ensure consistency
 				activeTab.originalContent = activeTab.content.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
 				openTabs = [...openTabs];
-				
+
 				// Mark file as recently saved to prevent auto-reload
 				recentlySavedFiles.add(activeTab.path);
 				setTimeout(() => {
 					recentlySavedFiles.delete(activeTab.path);
 					recentlySavedFiles = new Set(recentlySavedFiles);
 				}, 2000); // Clear after 2 seconds
-				
-				console.log('File saved successfully, activeTab after save:', activeTab);
-				console.log('OpenTabs after save:', openTabs);
 			} else {
 				const error = await response.json();
 				console.error('Save failed with error:', error);
@@ -140,36 +122,32 @@
 		} catch (error) {
 			console.error('Save threw exception:', error);
 		}
-		
-		console.log('=== SAVE FUNCTION COMPLETED ===');
 	}
-	
+
 	async function openFile(fileItem) {
-		console.time(`Opening file: ${fileItem.name}`);
-		
 		// Check if file is already open
-		const existingTab = openTabs.find(tab => tab.path === fileItem.path);
+		const existingTab = openTabs.find((tab) => tab.path === fileItem.path);
 		if (existingTab) {
 			activeTab = existingTab;
 			// Still add to recent files even if already open
 			addToRecentFiles(fileItem);
-			console.timeEnd(`Opening file: ${fileItem.name}`);
 			return;
 		}
-		
+
 		try {
-			const response = await fetch(`/api/files?root=${encodeURIComponent(rootPath)}&path=${encodeURIComponent(fileItem.path)}`);
+			const response = await fetch(
+				`/api/files?root=${encodeURIComponent(rootPath)}&path=${encodeURIComponent(fileItem.path)}`
+			);
 			const data = await response.json();
-			
+
 			if (data.error) {
 				console.error('Error loading file:', data.error);
-				console.timeEnd(`Opening file: ${fileItem.name}`);
 				return;
 			}
-			
+
 			// Normalize line endings to ensure consistent comparison
 			const normalizedContent = (data.content || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-			
+
 			const newTab = {
 				name: fileItem.name,
 				path: fileItem.path,
@@ -178,68 +156,53 @@
 				hasUnsavedChanges: false,
 				renderedContent: marked(normalizedContent)
 			};
-			
+
 			openTabs = [...openTabs, newTab];
 			activeTab = newTab;
-			
+
 			// Add to recent files
 			addToRecentFiles(fileItem);
-			
-			console.timeEnd(`Opening file: ${fileItem.name}`);
 		} catch (error) {
 			console.error('Error opening file:', error);
-			console.timeEnd(`Opening file: ${fileItem.name}`);
 		}
 	}
-	
+
 	function closeTab(tab) {
-		console.log('=== CLOSE TAB CALLED ===');
-		console.log('Closing tab:', tab.name);
-		console.log('Stack trace:', new Error().stack);
-		
 		const index = openTabs.indexOf(tab);
-		openTabs = openTabs.filter(t => t !== tab);
-		
+		openTabs = openTabs.filter((t) => t !== tab);
+
 		// Use path comparison instead of object equality to avoid Svelte 5 proxy issues
 		if (activeTab && activeTab.path === tab.path) {
 			if (openTabs.length > 0) {
 				activeTab = openTabs[Math.max(0, index - 1)];
 			} else {
 				activeTab = null;
-				console.log('=== SETTING ACTIVE TAB TO NULL - SHOULD SHOW WELCOME SCREEN ===');
 			}
 		}
-		
-		console.log('Tab closed, remaining tabs:', openTabs.length);
-		console.log('New active tab:', activeTab?.name || 'none');
-		console.log('activeTab is null:', activeTab === null);
-		console.log('openTabs length:', openTabs.length);
 	}
-	
+
 	function handleFileSelect(fileItem) {
 		openFile(fileItem);
 	}
-	
+
 	function pinFile(fileItem) {
-		console.log('Pinning file:', fileItem.name);
 		pinnedFiles.add(fileItem.path);
 		pinnedFiles = new Set(pinnedFiles); // Trigger reactivity
 		savePinnedFiles();
 	}
-	
+
 	function unpinFile(fileItem) {
-		console.log('Unpinning file:', fileItem.name);
 		pinnedFiles.delete(fileItem.path);
 		pinnedFiles = new Set(pinnedFiles); // Trigger reactivity
 		savePinnedFiles();
 	}
-	
+
 	function savePinnedFiles() {
 		if (typeof window !== 'undefined') {
 			localStorage.setItem('markdown-notes-pinned-files', JSON.stringify(Array.from(pinnedFiles)));
 		}
 	}
-	
+
 	function loadRecentFiles() {
 		if (typeof window !== 'undefined') {
 			const stored = localStorage.getItem('markdown-notes-recent-files');
@@ -253,37 +216,37 @@
 			}
 		}
 	}
-	
+
 	function saveRecentFiles() {
 		if (typeof window !== 'undefined') {
 			localStorage.setItem('markdown-notes-recent-files', JSON.stringify(recentFiles));
 		}
 	}
-	
+
 	function addToRecentFiles(fileItem) {
 		// Remove if already exists
-		recentFiles = recentFiles.filter(file => file.path !== fileItem.path);
-		
+		recentFiles = recentFiles.filter((file) => file.path !== fileItem.path);
+
 		// Add to beginning - create a plain object to avoid proxy issues
 		const recentFile = {
 			name: String(fileItem.name),
 			path: String(fileItem.path),
 			timestamp: Date.now()
 		};
-		
+
 		recentFiles.unshift(recentFile);
-		
+
 		// Keep only the number specified in settings
 		const maxFiles = currentSettings.recentFilesCount || 5;
 		recentFiles = recentFiles.slice(0, maxFiles);
-		
+
 		// Trigger reactivity
 		recentFiles = [...recentFiles];
-		
+
 		// Save to localStorage
 		saveRecentFiles();
 	}
-	
+
 	async function openRecentFile(recentFile) {
 		// Create a file item object like the one from FileTree
 		const fileItem = {
@@ -291,40 +254,38 @@
 			path: recentFile.path,
 			type: 'file'
 		};
-		
+
 		// Navigate to the file's directory in the tree
 		if (fileTreeComponent && fileTreeComponent.navigateToFile) {
 			fileTreeComponent.navigateToFile(recentFile.path);
 		}
-		
+
 		// Open the file without adding to recent files (to maintain order)
 		await openFileWithoutRecentTracking(fileItem);
 	}
-	
+
 	async function openFileWithoutRecentTracking(fileItem) {
-		console.time(`Opening file: ${fileItem.name}`);
-		
 		// Check if file is already open
-		const existingTab = openTabs.find(tab => tab.path === fileItem.path);
+		const existingTab = openTabs.find((tab) => tab.path === fileItem.path);
 		if (existingTab) {
 			activeTab = existingTab;
-			console.timeEnd(`Opening file: ${fileItem.name}`);
 			return;
 		}
-		
+
 		try {
-			const response = await fetch(`/api/files?root=${encodeURIComponent(rootPath)}&path=${encodeURIComponent(fileItem.path)}`);
+			const response = await fetch(
+				`/api/files?root=${encodeURIComponent(rootPath)}&path=${encodeURIComponent(fileItem.path)}`
+			);
 			const data = await response.json();
-			
+
 			if (data.error) {
 				console.error('Error loading file:', data.error);
-				console.timeEnd(`Opening file: ${fileItem.name}`);
 				return;
 			}
-			
+
 			// Normalize line endings to ensure consistent comparison
 			const normalizedContent = (data.content || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-			
+
 			const newTab = {
 				name: fileItem.name,
 				path: fileItem.path,
@@ -333,19 +294,16 @@
 				hasUnsavedChanges: false,
 				renderedContent: marked(normalizedContent)
 			};
-			
+
 			openTabs = [...openTabs, newTab];
 			activeTab = newTab;
-			
+
 			// Don't add to recent files when opening from recent files list
-			
-			console.timeEnd(`Opening file: ${fileItem.name}`);
 		} catch (error) {
 			console.error('Error opening file:', error);
-			console.timeEnd(`Opening file: ${fileItem.name}`);
 		}
 	}
-	
+
 	function loadPinnedFiles() {
 		if (typeof window !== 'undefined') {
 			const stored = localStorage.getItem('markdown-notes-pinned-files');
@@ -360,11 +318,11 @@
 			}
 		}
 	}
-	
+
 	function handleContextMenu(action, item) {
 		modalContext = item;
 		modalInput = '';
-		
+
 		switch (action) {
 			case 'create_file':
 				modalType = 'create_file';
@@ -384,7 +342,7 @@
 				break;
 		}
 	}
-	
+
 	async function deleteItem(item) {
 		try {
 			const response = await fetch('/api/files', {
@@ -396,16 +354,16 @@
 					rootPath
 				})
 			});
-			
+
 			if (response.ok) {
 				// Close tab if file was open
 				if (item.type === 'file') {
-					const openTab = openTabs.find(tab => tab.path === item.path);
+					const openTab = openTabs.find((tab) => tab.path === item.path);
 					if (openTab) {
 						closeTab(openTab);
 					}
 				}
-				
+
 				// Refresh file tree
 				if (fileTreeComponent) {
 					fileTreeComponent.refresh();
@@ -415,10 +373,10 @@
 			console.error('Error deleting item:', error);
 		}
 	}
-	
+
 	async function handleModalSubmit() {
 		if (!modalInput.trim()) return;
-		
+
 		const requestData = {
 			action: modalType === 'create_folder' ? 'create_directory' : modalType,
 			path: modalContext.path,
@@ -426,33 +384,29 @@
 			content: modalType === 'create_file' ? '# New Document\n\nStart writing here...' : undefined,
 			rootPath
 		};
-		
-		console.log('Sending request:', requestData);
-		
+
 		try {
 			const response = await fetch('/api/files', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify(requestData)
 			});
-			
+
 			if (response.ok) {
 				const result = await response.json();
-				console.log('API response:', result);
-				console.log('File created successfully, closing modal');
 				showModal = false;
 				modalInput = '';
-				
+
 				// Refresh file tree and expand parent folder
 				if (fileTreeComponent) {
 					await fileTreeComponent.refresh();
-					
+
 					// If creating in a subfolder, expand it
 					if (modalContext.path) {
 						fileTreeComponent.expandFolder(modalContext.path);
 					}
 				}
-				
+
 				// If creating a file, open it in a new tab
 				if (modalType === 'create_file' && result.path) {
 					const fileItem = {
@@ -462,19 +416,16 @@
 					};
 					await openFile(fileItem);
 				}
-				
-				console.log('Modal should be closed now, showModal:', showModal);
 			} else {
 				const error = await response.json();
 				console.error('Error creating item:', error);
-				console.error('Response status:', response.status);
 				alert(`Error: ${error.error || 'Unknown error'}`);
 			}
 		} catch (error) {
 			console.error('Error creating item:', error);
 		}
 	}
-	
+
 	function handleContentChange(event) {
 		if (activeTab) {
 			activeTab.content = event.target.value;
@@ -483,36 +434,25 @@
 			openTabs = [...openTabs];
 		}
 	}
-	
+
 	function handleEditorChange(newContent) {
 		if (activeTab) {
 			const oldHasUnsavedChanges = activeTab.hasUnsavedChanges;
 			activeTab.content = newContent;
-			
+
 			// Normalize line endings for comparison to avoid false positives
 			const normalizedContent = activeTab.content.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-			const normalizedOriginal = activeTab.originalContent.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-			
+			const normalizedOriginal = activeTab.originalContent
+				.replace(/\r\n/g, '\n')
+				.replace(/\r/g, '\n');
+
 			activeTab.hasUnsavedChanges = normalizedContent !== normalizedOriginal;
 			activeTab.renderedContent = marked(activeTab.content);
 			openTabs = [...openTabs];
-			
-			console.log('Editor change:', {
-				name: activeTab.name,
-				hasUnsavedChanges: activeTab.hasUnsavedChanges,
-				oldHasUnsavedChanges,
-				contentLength: activeTab.content.length,
-				originalLength: activeTab.originalContent.length,
-				normalizedContentLength: normalizedContent.length,
-				normalizedOriginalLength: normalizedOriginal.length,
-				openTabsLength: openTabs.length
-			});
 		}
 	}
-	
+
 	function handleFileChange(event) {
-		console.log('File change event:', event);
-		
 		// Delay to avoid race conditions with save operations
 		setTimeout(() => {
 			// Refresh file tree when files change
@@ -520,59 +460,59 @@
 				fileTreeComponent.refresh();
 			}
 		}, 100);
-		
+
 		// Handle opened files that were modified externally
 		if (event.type === 'change' && !event.isDirectory) {
-			const openTab = openTabs.find(tab => tab.path === event.path);
+			const openTab = openTabs.find((tab) => tab.path === event.path);
 			if (openTab && !openTab.hasUnsavedChanges && !recentlySavedFiles.has(event.path)) {
-				console.log('File changed externally, but skipping reload to prevent save conflicts:', event.path);
 				// Temporarily disabled to fix save issues
 				// openFile({ path: event.path, name: openTab.name });
 			}
 		}
-		
+
 		// Handle deleted files
 		if (event.type === 'unlink' && !event.isDirectory) {
-			const openTab = openTabs.find(tab => tab.path === event.path);
+			const openTab = openTabs.find((tab) => tab.path === event.path);
 			if (openTab) {
 				closeTab(openTab);
 			}
 		}
 	}
-	
+
 	onMount(async () => {
 		// Global error handler
 		window.addEventListener('error', (event) => {
 			console.error('Global error:', event.error);
 			console.error('Error stack:', event.error.stack);
 		});
-		
+
 		window.addEventListener('unhandledrejection', (event) => {
 			console.error('Unhandled promise rejection:', event.reason);
 		});
-		
+
 		document.addEventListener('keydown', handleKeydown);
-		
+
 		// Load pinned files from localStorage
 		loadPinnedFiles();
-		
+
 		// Load recent files from localStorage
 		loadRecentFiles();
-		
+
 		// Get current working directory from server
 		try {
 			const response = await fetch('/api/cwd');
 			const data = await response.json();
 			const serverCwd = data.cwd;
-			
+
 			// Load settings
 			currentSettings = settings.load();
-			
+
 			// Use saved rootPath or default to server's cwd
-			rootPath = currentSettings.rootPath && currentSettings.rootPath !== '/path/to/notes' 
-				? currentSettings.rootPath 
-				: serverCwd;
-				
+			rootPath =
+				currentSettings.rootPath && currentSettings.rootPath !== '/path/to/notes'
+					? currentSettings.rootPath
+					: serverCwd;
+
 			// Update settings if we're using the server's cwd
 			if (currentSettings.rootPath === '/path/to/notes') {
 				settings.updateSetting('rootPath', serverCwd);
@@ -583,18 +523,18 @@
 			currentSettings = settings.load();
 			rootPath = currentSettings.rootPath;
 		}
-		
+
 		// Initialize file watcher only if we have a rootPath
 		// TEMPORARILY DISABLED FOR DEBUGGING
 		// if (rootPath) {
 		// 	fileWatcher = new FileWatcher(rootPath, handleFileChange);
 		// 	await fileWatcher.start();
 		// }
-		
+
 		// Apply initial theme
 		const actualTheme = applyTheme(currentSettings.theme);
 		isDarkMode = actualTheme === 'dark';
-		
+
 		// Watch for system theme changes
 		let stopWatchingSystem;
 		if (currentSettings.theme === 'system') {
@@ -603,27 +543,24 @@
 				applyTheme('system');
 			});
 		}
-		
+
 		// Subscribe to settings changes
-		const unsubscribe = settings.subscribe(newSettings => {
+		const unsubscribe = settings.subscribe((newSettings) => {
 			currentSettings = newSettings;
 			if (newSettings.rootPath !== rootPath) {
-				const oldRootPath = rootPath;
 				rootPath = newSettings.rootPath;
-				
-				console.log('Root path changed from', oldRootPath, 'to', rootPath);
-				
+
 				// Clear open tabs since they're from the old root path
 				openTabs = [];
 				activeTab = null;
-				
+
 				// Restart file watcher with new root path
 				if (fileWatcher) {
 					fileWatcher.stop();
 					fileWatcher = new FileWatcher(rootPath, handleFileChange);
 					fileWatcher.start();
 				}
-				
+
 				// Refresh file tree with new root path
 				if (fileTreeComponent) {
 					setTimeout(() => {
@@ -631,17 +568,17 @@
 					}, 100);
 				}
 			}
-			
+
 			// Apply theme changes
 			const actualTheme = applyTheme(newSettings.theme);
 			isDarkMode = actualTheme === 'dark';
-			
+
 			// Update system theme watcher
 			if (stopWatchingSystem) {
 				stopWatchingSystem();
 				stopWatchingSystem = null;
 			}
-			
+
 			if (newSettings.theme === 'system') {
 				stopWatchingSystem = watchSystemTheme((systemTheme) => {
 					isDarkMode = systemTheme === 'dark';
@@ -649,7 +586,7 @@
 				});
 			}
 		});
-		
+
 		return () => {
 			document.removeEventListener('keydown', handleKeydown);
 			if (fileWatcher) {
@@ -661,7 +598,7 @@
 			unsubscribe();
 		};
 	});
-	
+
 	onDestroy(() => {
 		if (fileWatcher) {
 			fileWatcher.stop();
@@ -671,30 +608,37 @@
 
 <div class="flex h-screen">
 	<!-- Left Sidebar -->
-	<div 
-		class="bg-gray-100 border-r border-gray-300 flex flex-col relative h-full transition-all duration-300 ease-in-out overflow-hidden" 
-		class:bg-gray-800={isDarkMode} 
+	<div
+		class="relative flex h-full flex-col overflow-hidden border-r border-gray-300 bg-gray-100 transition-all duration-300 ease-in-out"
+		class:bg-gray-800={isDarkMode}
 		class:border-gray-600={isDarkMode}
 		style="width: {sidebarVisible ? sidebarWidth : 0}px;"
 	>
 		{#if sidebarVisible}
-			<div class="p-4 border-b border-gray-300 flex justify-between items-center flex-shrink-0" class:border-gray-600={isDarkMode}>
-				<h2 class="text-lg font-semibold text-gray-800 truncate flex-1 mr-2" class:text-gray-100={isDarkMode} title={rootPath}>
+			<div
+				class="flex flex-shrink-0 items-center justify-between border-b border-gray-300 p-4"
+				class:border-gray-600={isDarkMode}
+			>
+				<h2
+					class="mr-2 flex-1 truncate text-lg font-semibold text-gray-800"
+					class:text-gray-100={isDarkMode}
+					title={rootPath}
+				>
 					{rootPath ? rootPath.split('\\').pop() || rootPath.split('/').pop() || 'Files' : 'Files'}
 				</h2>
 				<button
-					class="p-1 hover:bg-gray-200 rounded flex-shrink-0"
+					class="flex-shrink-0 rounded p-1 hover:bg-gray-200"
 					class:hover:bg-gray-600={isDarkMode}
-					onclick={() => showSettings = true}
+					onclick={() => (showSettings = true)}
 					title="Settings"
 				>
 					⚙️
 				</button>
 			</div>
-			
+
 			<div class="flex-1 overflow-y-auto p-2">
 				{#if rootPath}
-					<FileTree 
+					<FileTree
 						bind:this={fileTreeComponent}
 						{rootPath}
 						{expandedFolders}
@@ -705,24 +649,21 @@
 						recentFilesCount={currentSettings.recentFilesCount}
 						onFileSelect={handleFileSelect}
 						onContextMenu={handleContextMenu}
-						onExpandedFoldersChange={(folders) => expandedFolders = folders}
+						onExpandedFoldersChange={(folders) => (expandedFolders = folders)}
 						onPinFile={pinFile}
 						onUnpinFile={unpinFile}
 						onRecentFileSelect={openRecentFile}
 					/>
 				{:else}
-					<div class="text-sm text-gray-500 p-4">
-						Loading...
-					</div>
+					<div class="p-4 text-sm text-gray-500">Loading...</div>
 				{/if}
 			</div>
-			
 		{/if}
-		
+
 		<!-- Resize Handle -->
 		{#if sidebarVisible}
-			<div 
-				class="absolute top-0 right-0 w-2 h-full cursor-col-resize bg-gray-300 hover:bg-gray-400 transition-colors active:bg-gray-500"
+			<div
+				class="absolute top-0 right-0 h-full w-2 cursor-col-resize bg-gray-300 transition-colors hover:bg-gray-400 active:bg-gray-500"
 				class:bg-gray-600={isDarkMode}
 				class:hover:bg-gray-500={isDarkMode}
 				class:active:bg-gray-400={isDarkMode}
@@ -731,32 +672,37 @@
 			></div>
 		{/if}
 	</div>
-	
+
 	<!-- Show Sidebar Button (when sidebar is hidden) -->
 	{#if !sidebarVisible}
 		<div class="fixed top-4 left-4 z-10">
-			<button 
-				class="p-2 bg-gray-800 text-white rounded-md shadow-lg hover:bg-gray-700 transition-colors"
+			<button
+				class="rounded-md bg-gray-800 p-2 text-white shadow-lg transition-colors hover:bg-gray-700"
 				class:bg-gray-700={isDarkMode}
 				class:hover:bg-gray-600={isDarkMode}
 				onclick={toggleSidebar}
 				title="Show sidebar (Ctrl+B)"
 			>
-				<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+				<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<path
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						stroke-width="2"
+						d="M4 6h16M4 12h16M4 18h16"
+					></path>
 				</svg>
 			</button>
 		</div>
 	{/if}
-	
+
 	<!-- Main Content Area -->
-	<div class="flex-1 flex flex-col h-full">
+	<div class="flex h-full flex-1 flex-col">
 		<!-- Tab Bar -->
 		{#if openTabs.length > 0}
-			<div class="flex bg-gray-50 border-b border-gray-300 min-h-[40px]">
+			<div class="flex min-h-[40px] border-b border-gray-300 bg-gray-50">
 				{#each openTabs as tab, index}
 					<div
-						class="flex items-center px-4 py-2 text-sm border-r border-gray-300 hover:bg-gray-100 gap-2"
+						class="flex items-center gap-2 border-r border-gray-300 px-4 py-2 text-sm hover:bg-gray-100"
 						class:bg-white={activeTab?.path === tab.path && !isDarkMode}
 						class:bg-gray-50={activeTab?.path !== tab.path && !isDarkMode}
 						class:bg-blue-500={activeTab?.path === tab.path && !isDarkMode}
@@ -766,17 +712,14 @@
 						class:text-gray-100={activeTab?.path === tab.path && isDarkMode}
 						class:border-blue-400={activeTab?.path === tab.path}
 					>
-						<button
-							class="flex items-center gap-2 flex-1"
-							onclick={() => activeTab = tab}
-						>
+						<button class="flex flex-1 items-center gap-2" onclick={() => (activeTab = tab)}>
 							<span>{tab.name}</span>
 							{#if tab.hasUnsavedChanges}
-								<span class="text-orange-500 font-bold">●</span>
+								<span class="font-bold text-orange-500">●</span>
 							{/if}
 						</button>
 						<button
-							class="ml-1 hover:bg-gray-200 rounded px-1 flex-shrink-0"
+							class="ml-1 flex-shrink-0 rounded px-1 hover:bg-gray-200"
 							onclick={(e) => {
 								e.stopPropagation();
 								closeTab(tab);
@@ -788,15 +731,14 @@
 				{/each}
 			</div>
 		{/if}
-		
+
 		<!-- Content Area -->
-		<div class="flex-1 flex overflow-hidden">
+		<div class="flex flex-1 overflow-hidden">
 			{#if activeTab}
-				<!-- DEBUG: activeTab exists: {activeTab.name} -->
-				<div class="flex-1 p-4 overflow-hidden">
+				<div class="flex-1 overflow-hidden p-4">
 					{#if isEditing}
 						<!-- Editor Mode -->
-						<div class="h-full border border-gray-300 rounded">
+						<div class="h-full rounded border border-gray-300">
 							<MarkdownEditor
 								value={activeTab.content}
 								onChange={handleEditorChange}
@@ -806,42 +748,62 @@
 						</div>
 					{:else}
 						<!-- Preview Mode -->
-						<div class="h-full overflow-y-auto prose prose-sm max-w-none" class:prose-invert={isDarkMode}>
-							<div class="p-4 border border-gray-200 rounded" class:bg-white={!isDarkMode} class:bg-gray-800={isDarkMode} class:border-gray-600={isDarkMode} class:text-gray-100={isDarkMode}>
+						<div
+							class="prose prose-sm h-full max-w-none overflow-y-auto"
+							class:prose-invert={isDarkMode}
+						>
+							<div
+								class="rounded border border-gray-200 p-4"
+								class:bg-white={!isDarkMode}
+								class:bg-gray-800={isDarkMode}
+								class:border-gray-600={isDarkMode}
+								class:text-gray-100={isDarkMode}
+							>
 								{@html activeTab.renderedContent || '<p>No content to preview</p>'}
 							</div>
 						</div>
 					{/if}
 				</div>
 			{:else}
-				<!-- DEBUG: activeTab is null, showing welcome screen -->
 				<!-- Welcome Screen -->
-				<div class="flex-1 flex items-center justify-center">
+				<div class="flex flex-1 items-center justify-center">
 					<div class="text-center text-gray-500" class:text-gray-400={isDarkMode}>
-						<h1 class="text-2xl font-bold mb-4" class:text-gray-100={isDarkMode}>Markdown Notes</h1>
+						<h1 class="mb-4 text-2xl font-bold" class:text-gray-100={isDarkMode}>Markdown Notes</h1>
 						<p class="mb-2">Select a file from the sidebar to get started</p>
 						<p class="text-sm">
-							<kbd class="bg-gray-100 px-2 py-1 rounded text-gray-800" class:bg-gray-700={isDarkMode} class:text-gray-100={isDarkMode}>Ctrl+B</kbd> Toggle sidebar
+							<kbd
+								class="rounded bg-gray-100 px-2 py-1 text-gray-800"
+								class:bg-gray-700={isDarkMode}
+								class:text-gray-100={isDarkMode}>Ctrl+B</kbd
+							> Toggle sidebar
 						</p>
 						<p class="text-sm">
-							<kbd class="bg-gray-100 px-2 py-1 rounded text-gray-800" class:bg-gray-700={isDarkMode} class:text-gray-100={isDarkMode}>Ctrl+Shift+E</kbd> Toggle editor/preview
+							<kbd
+								class="rounded bg-gray-100 px-2 py-1 text-gray-800"
+								class:bg-gray-700={isDarkMode}
+								class:text-gray-100={isDarkMode}>Ctrl+Shift+E</kbd
+							> Toggle editor/preview
 						</p>
 						<p class="text-sm">
-							<kbd class="bg-gray-100 px-2 py-1 rounded text-gray-800" class:bg-gray-700={isDarkMode} class:text-gray-100={isDarkMode}>Ctrl+S</kbd> Save file
+							<kbd
+								class="rounded bg-gray-100 px-2 py-1 text-gray-800"
+								class:bg-gray-700={isDarkMode}
+								class:text-gray-100={isDarkMode}>Ctrl+S</kbd
+							> Save file
 						</p>
 					</div>
 				</div>
 			{/if}
 		</div>
-		
+
 		<!-- Footer -->
 		{#if currentSettings.showFooter}
-			<Footer 
+			<Footer
 				{activeTab}
 				{isDarkMode}
 				{isEditing}
 				dateTimeFormat={currentSettings.dateTimeFormat}
-				onModeToggle={() => isEditing = !isEditing}
+				onModeToggle={() => (isEditing = !isEditing)}
 			/>
 		{/if}
 	</div>
@@ -849,12 +811,12 @@
 
 <!-- Modal -->
 {#if showModal}
-	<div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-		<div class="bg-white rounded-lg p-6 w-96">
-			<h3 class="text-lg font-semibold mb-4">{modalTitle}</h3>
+	<div class="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black">
+		<div class="w-96 rounded-lg bg-white p-6">
+			<h3 class="mb-4 text-lg font-semibold">{modalTitle}</h3>
 			<input
 				type="text"
-				class="w-full p-2 border border-gray-300 rounded mb-4"
+				class="mb-4 w-full rounded border border-gray-300 p-2"
 				placeholder="Enter name..."
 				bind:value={modalInput}
 				autofocus
@@ -868,13 +830,13 @@
 			/>
 			<div class="flex justify-end gap-2">
 				<button
-					class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded"
-					onclick={() => showModal = false}
+					class="rounded px-4 py-2 text-gray-600 hover:bg-gray-100"
+					onclick={() => (showModal = false)}
 				>
 					Cancel
 				</button>
 				<button
-					class="px-4 py-2 bg-blue-500 text-white hover:bg-blue-600 rounded"
+					class="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
 					onclick={handleModalSubmit}
 				>
 					Create
@@ -885,7 +847,4 @@
 {/if}
 
 <!-- Settings Modal -->
-<SettingsModal 
-	isOpen={showSettings}
-	onClose={() => showSettings = false}
-/>
+<SettingsModal isOpen={showSettings} onClose={() => (showSettings = false)} />

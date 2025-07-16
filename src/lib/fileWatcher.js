@@ -6,10 +6,10 @@ export class FileWatcher {
 		this.eventSource = null;
 		this.isActive = false;
 	}
-	
+
 	async start() {
 		if (this.isActive) return;
-		
+
 		try {
 			// Start watcher on server
 			const response = await fetch('/api/watch', {
@@ -21,14 +21,14 @@ export class FileWatcher {
 					clientId: this.clientId
 				})
 			});
-			
+
 			if (!response.ok) {
 				throw new Error('Failed to start file watcher');
 			}
-			
+
 			// Set up event source for real-time updates
 			this.eventSource = new EventSource(`/api/watch?clientId=${this.clientId}`);
-			
+
 			this.eventSource.onmessage = (event) => {
 				try {
 					const data = JSON.parse(event.data);
@@ -37,27 +37,26 @@ export class FileWatcher {
 					console.error('Error parsing file event:', error);
 				}
 			};
-			
+
 			this.eventSource.onerror = (error) => {
 				console.error('File watcher error:', error);
 			};
-			
+
 			this.isActive = true;
-			
 		} catch (error) {
 			console.error('Error starting file watcher:', error);
 		}
 	}
-	
+
 	async stop() {
 		if (!this.isActive) return;
-		
+
 		try {
 			if (this.eventSource) {
 				this.eventSource.close();
 				this.eventSource = null;
 			}
-			
+
 			await fetch('/api/watch', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
@@ -66,20 +65,19 @@ export class FileWatcher {
 					clientId: this.clientId
 				})
 			});
-			
+
 			this.isActive = false;
-			
 		} catch (error) {
 			console.error('Error stopping file watcher:', error);
 		}
 	}
-	
+
 	handleFileEvent(data) {
 		const { type, path } = data;
-		
+
 		// Convert absolute path to relative
 		const relativePath = path.replace(this.rootPath, '').replace(/^[\\/]/, '');
-		
+
 		// Only handle markdown files and directories
 		if (type === 'add' || type === 'change' || type === 'unlink') {
 			if (path.endsWith('.md')) {
