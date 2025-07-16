@@ -1,0 +1,141 @@
+@import 'tailwindcss';
+@plugin '@tailwindcss/forms';
+@plugin '@tailwindcss/typography';
+
+/* Dark mode styles */
+:root {
+	--bg-primary: #ffffff;
+	--bg-secondary: #f9fafb;
+	--bg-tertiary: #f3f4f6;
+	--text-primary: #111827;
+	--text-secondary: #6b7280;
+	--border-color: #d1d5db;
+	--accent-color: #3b82f6;
+}
+
+.dark {
+	--bg-primary: #1f2937;
+	--bg-secondary: #374151;
+	--bg-tertiary: #4b5563;
+	--text-primary: #f9fafb;
+	--text-secondary: #d1d5db;
+	--border-color: #6b7280;
+	--accent-color: #60a5fa;
+}
+
+html, body {
+	height: 100vh;
+	margin: 0;
+	padding: 0;
+}
+
+body {
+	background-color: var(--bg-primary);
+	color: var(--text-primary);
+	transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+#svelte {
+	height: 100vh;
+}
+
+/* Dark mode overrides for specific elements */
+.dark .bg-gray-100 {
+	background-color: var(--bg-secondary);
+}
+
+.dark .bg-gray-50 {
+	background-color: var(--bg-tertiary);
+}
+
+.dark .text-gray-800 {
+	color: var(--text-primary);
+}
+
+.dark .text-gray-600 {
+	color: var(--text-secondary);
+}
+
+.dark .border-gray-300 {
+	border-color: var(--border-color);
+}
+
+.dark .bg-white {
+	background-color: var(--bg-primary);
+}
+
+.dark .text-gray-500 {
+	color: var(--text-secondary);
+}
+
+.dark .hover\:bg-gray-200:hover {
+	background-color: var(--bg-tertiary);
+}
+
+.dark .hover\:bg-gray-100:hover {
+	background-color: var(--bg-secondary);
+}
+
+/* Modal and input fixes for dark mode */
+.dark input {
+	background-color: var(--bg-secondary);
+	color: var(--text-primary);
+	border-color: var(--border-color);
+}
+
+.dark input:focus {
+	background-color: var(--bg-secondary);
+	color: var(--text-primary);
+}
+
+.dark select {
+	background-color: var(--bg-secondary);
+	color: var(--text-primary);
+	border-color: var(--border-color);
+}
+
+.dark textarea {
+	background-color: var(--bg-secondary);
+	color: var(--text-primary);
+	border-color: var(--border-color);
+}
+
+.dark .bg-blue-500 {
+	background-color: var(--accent-color);
+}
+
+.dark .hover\:bg-blue-600:hover {
+	background-color: #4f46e5;
+}
+
+/* Fix emoji backgrounds in dark mode */
+.dark span {
+	background-color: transparent !important;
+	background: none !important;
+}
+
+/* Ensure file tree emojis have no background */
+.dark .file-item span {
+	background-color: transparent !important;
+	background: none !important;
+	color: inherit !important;
+}
+
+/* Specific fix for directory arrows and folder emojis */
+.dark .file-item span:contains("▶"),
+.dark .file-item span:contains("▼"),
+.dark .file-item span:contains("📁"),
+.dark .file-item span:contains("📄") {
+	background-color: transparent !important;
+	background: none !important;
+	color: inherit !important;
+}
+
+/* Alternative approach using nth-child selectors */
+.dark .file-item span:nth-child(1),
+.dark .file-item span:nth-child(2),
+.dark .file-item span:nth-child(3) {
+	background-color: transparent !important;
+	background: none !important;
+	color: inherit !important;
+}
