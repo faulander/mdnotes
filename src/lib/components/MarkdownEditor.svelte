@@ -69,7 +69,11 @@
 		insertText('> ');
 	}
 
-	onMount(() => {
+	function createEditor() {
+		if (editorView) {
+			editorView.destroy();
+		}
+
 		const extensions = [
 			basicSetup,
 			markdown(),
@@ -106,12 +110,23 @@
 			extensions,
 			parent: editorElement
 		});
+	}
+
+	onMount(() => {
+		createEditor();
 
 		return () => {
 			if (editorView) {
 				editorView.destroy();
 			}
 		};
+	});
+
+	// Recreate editor when dark mode changes
+	$effect(() => {
+		if (editorElement) {
+			createEditor();
+		}
 	});
 
 	// Update editor content when value prop changes

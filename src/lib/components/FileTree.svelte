@@ -359,14 +359,14 @@
 
 	<!-- Recent Files Section -->
 	{#if recentFilesCount > 0 && recentFiles.length > 0}
-		<div class="recent-files-section mb-2 border-b border-gray-200">
-			<div class="px-2 py-1 text-xs font-semibold tracking-wider text-gray-600 uppercase">
+		<div class="recent-files-section mb-2 border-b border-gray-200 dark:border-gray-600">
+			<div class="px-2 py-1 text-xs font-semibold tracking-wider text-gray-700 dark:text-gray-400 uppercase">
 				Recent Files
 			</div>
 			<div class="px-2 pb-2">
 				{#each recentFiles.slice(0, recentFilesCount) as recentFile}
 					<div
-						class="flex items-center gap-2 {spacingConfig.verticalPadding} {spacingConfig.horizontalPadding} group cursor-pointer rounded hover:bg-gray-100"
+						class="flex items-center gap-2 {spacingConfig.verticalPadding} {spacingConfig.horizontalPadding} group cursor-pointer rounded hover:bg-gray-100 dark:hover:bg-gray-700"
 						onclick={() => onRecentFileSelect(recentFile)}
 					>
 						<svg
@@ -382,10 +382,10 @@
 								d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
 							/>
 						</svg>
-						<span class="flex-1 truncate {spacingConfig.fontSize} text-gray-900 dark:text-gray-100">
+						<span class="recent-file-name flex-1 truncate {spacingConfig.fontSize}">
 							{recentFile.name}
 						</span>
-						<span class="text-xs text-gray-400 opacity-0 group-hover:opacity-100">
+						<span class="text-xs text-gray-500 dark:text-gray-400 opacity-0 group-hover:opacity-100">
 							{new Date(recentFile.timestamp).toLocaleTimeString()}
 						</span>
 					</div>
@@ -700,6 +700,24 @@
 		background-color: transparent !important;
 		background: none !important;
 		color: inherit !important;
+	}
+
+	/* Recent file name styling */
+	.recent-file-name {
+		color: #000000 !important;
+	}
+
+	:global(.dark) .recent-file-name {
+		color: #f3f4f6 !important;
+	}
+
+	/* Fix hover state text color in light mode to be light on dark background */
+	.recent-files-section .group:hover .recent-file-name {
+		color: #ffffff !important;
+	}
+
+	:global(.dark) .recent-files-section .group:hover .recent-file-name {
+		color: #f3f4f6 !important;
 	}
 
 	/* Dark mode support for new folder button */

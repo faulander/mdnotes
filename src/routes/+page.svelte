@@ -699,18 +699,20 @@
 	<div class="flex h-full flex-1 flex-col">
 		<!-- Tab Bar -->
 		{#if openTabs.length > 0}
-			<div class="flex min-h-[40px] border-b border-gray-300 bg-gray-50">
+			<div class="flex min-h-[40px] border-b border-gray-300 bg-gray-50" class:bg-gray-800={isDarkMode} class:border-gray-600={isDarkMode}>
 				{#each openTabs as tab, index}
 					<div
-						class="flex items-center gap-2 border-r border-gray-300 px-4 py-2 text-sm hover:bg-gray-100"
-						class:bg-white={activeTab?.path === tab.path && !isDarkMode}
-						class:bg-gray-50={activeTab?.path !== tab.path && !isDarkMode}
+						class="flex items-center gap-2 border-r border-gray-300 px-4 py-2 text-sm"
+						class:border-gray-600={isDarkMode}
 						class:bg-blue-500={activeTab?.path === tab.path && !isDarkMode}
-						class:text-white={activeTab?.path === tab.path && !isDarkMode}
-						class:bg-gray-700={activeTab?.path === tab.path && isDarkMode}
+						class:bg-blue-600={activeTab?.path === tab.path && isDarkMode}
+						class:text-white={activeTab?.path === tab.path}
+						class:bg-gray-50={activeTab?.path !== tab.path && !isDarkMode}
+						class:text-gray-700={activeTab?.path !== tab.path && !isDarkMode}
+						class:hover:bg-gray-100={activeTab?.path !== tab.path && !isDarkMode}
 						class:bg-gray-800={activeTab?.path !== tab.path && isDarkMode}
-						class:text-gray-100={activeTab?.path === tab.path && isDarkMode}
-						class:border-blue-400={activeTab?.path === tab.path}
+						class:text-gray-200={activeTab?.path !== tab.path && isDarkMode}
+						class:hover:bg-gray-700={activeTab?.path !== tab.path && isDarkMode}
 					>
 						<button class="flex flex-1 items-center gap-2" onclick={() => (activeTab = tab)}>
 							<span>{tab.name}</span>
@@ -720,6 +722,7 @@
 						</button>
 						<button
 							class="ml-1 flex-shrink-0 rounded px-1 hover:bg-gray-200"
+							class:hover:bg-gray-600={isDarkMode}
 							onclick={(e) => {
 								e.stopPropagation();
 								closeTab(tab);
