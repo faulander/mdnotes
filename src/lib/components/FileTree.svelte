@@ -335,7 +335,7 @@
 			<svg class="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
 				<path d="M2 6a2 2 0 012-2h4l2 2h4a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"/>
 			</svg>
-			<span>New Folder</span>
+			<span>New Rootfolder</span>
 		</button>
 	</div>
 	

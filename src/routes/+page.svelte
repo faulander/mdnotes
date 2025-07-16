@@ -512,8 +512,13 @@
 
 <div class="flex h-screen">
 	<!-- Left Sidebar -->
-	{#if sidebarVisible}
-		<div class="bg-gray-100 border-r border-gray-300 flex flex-col relative h-full" class:bg-gray-800={isDarkMode} class:border-gray-600={isDarkMode} style="width: {sidebarWidth}px;">
+	<div 
+		class="bg-gray-100 border-r border-gray-300 flex flex-col relative h-full transition-all duration-300 ease-in-out overflow-hidden" 
+		class:bg-gray-800={isDarkMode} 
+		class:border-gray-600={isDarkMode}
+		style="width: {sidebarVisible ? sidebarWidth : 0}px;"
+	>
+		{#if sidebarVisible}
 			<div class="p-4 border-b border-gray-300 flex justify-between items-center flex-shrink-0" class:border-gray-600={isDarkMode}>
 				<h2 class="text-lg font-semibold text-gray-800 truncate flex-1 mr-2" class:text-gray-100={isDarkMode} title={rootPath}>
 					{rootPath ? rootPath.split('\\').pop() || rootPath.split('/').pop() || 'Files' : 'Files'}
@@ -547,7 +552,10 @@
 				{/if}
 			</div>
 			
-			<!-- Resize Handle -->
+		{/if}
+		
+		<!-- Resize Handle -->
+		{#if sidebarVisible}
 			<div 
 				class="absolute top-0 right-0 w-2 h-full cursor-col-resize bg-gray-300 hover:bg-gray-400 transition-colors active:bg-gray-500"
 				class:bg-gray-600={isDarkMode}
@@ -556,6 +564,23 @@
 				onmousedown={startResize}
 				style="right: -1px;"
 			></div>
+		{/if}
+	</div>
+	
+	<!-- Show Sidebar Button (when sidebar is hidden) -->
+	{#if !sidebarVisible}
+		<div class="fixed top-4 left-4 z-10">
+			<button 
+				class="p-2 bg-gray-800 text-white rounded-md shadow-lg hover:bg-gray-700 transition-colors"
+				class:bg-gray-700={isDarkMode}
+				class:hover:bg-gray-600={isDarkMode}
+				onclick={toggleSidebar}
+				title="Show sidebar (Ctrl+B)"
+			>
+				<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+				</svg>
+			</button>
 		</div>
 	{/if}
 	
@@ -624,17 +649,17 @@
 			{:else}
 				<!-- Welcome Screen -->
 				<div class="flex-1 flex items-center justify-center">
-					<div class="text-center text-gray-500">
-						<h1 class="text-2xl font-bold mb-4">Markdown Notes</h1>
+					<div class="text-center text-gray-500" class:text-gray-400={isDarkMode}>
+						<h1 class="text-2xl font-bold mb-4" class:text-gray-100={isDarkMode}>Markdown Notes</h1>
 						<p class="mb-2">Select a file from the sidebar to get started</p>
 						<p class="text-sm">
-							<kbd class="bg-gray-100 px-2 py-1 rounded">Ctrl+B</kbd> Toggle sidebar
+							<kbd class="bg-gray-100 px-2 py-1 rounded text-gray-800" class:bg-gray-700={isDarkMode} class:text-gray-100={isDarkMode}>Ctrl+B</kbd> Toggle sidebar
 						</p>
 						<p class="text-sm">
-							<kbd class="bg-gray-100 px-2 py-1 rounded">Ctrl+Shift+E</kbd> Toggle editor/preview
+							<kbd class="bg-gray-100 px-2 py-1 rounded text-gray-800" class:bg-gray-700={isDarkMode} class:text-gray-100={isDarkMode}>Ctrl+Shift+E</kbd> Toggle editor/preview
 						</p>
 						<p class="text-sm">
-							<kbd class="bg-gray-100 px-2 py-1 rounded">Ctrl+S</kbd> Save file
+							<kbd class="bg-gray-100 px-2 py-1 rounded text-gray-800" class:bg-gray-700={isDarkMode} class:text-gray-100={isDarkMode}>Ctrl+S</kbd> Save file
 						</p>
 					</div>
 				</div>

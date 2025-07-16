@@ -1,5 +1,6 @@
 <script>
 	import { onMount, onDestroy } from 'svelte';
+	import { version } from '../../../package.json';
 	
 	let { 
 		activeTab = null,
@@ -114,7 +115,7 @@
 		
 		<!-- Version -->
 		<span class="text-gray-500">|</span>
-		<span title="Application version">v0.1.0</span>
+		<span title="Application version">v{version}</span>
 	</div>
 </footer>
 
