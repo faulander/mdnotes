@@ -204,6 +204,20 @@
 								<option value="HH:mm">14:30</option>
 							</select>
 						</div>
+						
+						<div>
+							<label class="block text-sm font-medium text-gray-700 mb-2">
+								File Tree Spacing
+							</label>
+							<select
+								class="w-full p-2 border border-gray-300 rounded"
+								bind:value={currentSettings.fileTreeSpacing}
+							>
+								<option value="compact">Compact (for large directories)</option>
+								<option value="normal">Normal (default)</option>
+								<option value="comfortable">Comfortable (more space)</option>
+							</select>
+						</div>
 					</div>
 				</div>
 			</div>

@@ -12,7 +12,8 @@ const defaultSettings = {
 	autoSave: false,
 	autoSaveDelay: 2000,
 	dateTimeFormat: 'YYYY-MM-DD HH:mm:ss',
-	showFooter: true
+	showFooter: true,
+	fileTreeSpacing: 'normal' // 'compact', 'normal', 'comfortable'
 };
 
 // Create settings store

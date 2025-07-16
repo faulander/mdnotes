@@ -5,6 +5,7 @@
 		rootPath = '', 
 		expandedFolders = new Set(),
 		activeFilePath = null,
+		spacing = 'normal',
 		onFileSelect = () => {}, 
 		onContextMenu = () => {},
 		onExpandedFoldersChange = () => {}
@@ -19,6 +20,38 @@
 	let directoryCache = $state(new Map());
 	let loadingFolders = $state(new Set());
 	let refreshTimeout = null;
+	
+	// Spacing configuration
+	function getSpacingConfig(spacing) {
+		switch (spacing) {
+			case 'compact':
+				return {
+					verticalPadding: 'py-0.5',
+					horizontalPadding: 'px-2',
+					indentSize: 12,
+					iconSize: 'w-3 h-3',
+					fontSize: 'text-xs'
+				};
+			case 'comfortable':
+				return {
+					verticalPadding: 'py-2',
+					horizontalPadding: 'px-3',
+					indentSize: 20,
+					iconSize: 'w-4 h-4',
+					fontSize: 'text-sm'
+				};
+			default: // normal
+				return {
+					verticalPadding: 'py-1',
+					horizontalPadding: 'px-2',
+					indentSize: 16,
+					iconSize: 'w-4 h-4',
+					fontSize: 'text-sm'
+				};
+		}
+	}
+	
+	let spacingConfig = $derived(getSpacingConfig(spacing));
 	
 	async function loadDirectory(path = '') {
 		// Check cache first
@@ -285,7 +318,7 @@
 	{/each}
 	
 	{#if fileTree.length === 0}
-		<div class="text-sm text-gray-500 p-4">
+		<div class="text-gray-500 p-4 {spacingConfig.fontSize}">
 			No markdown files found
 		</div>
 	{/if}
@@ -294,23 +327,23 @@
 {#snippet renderTreeItem(item, depth)}
 	<div class="file-item-container">
 		<div
-			class="file-item flex items-center py-1 px-2 hover:bg-gray-200 cursor-pointer select-none"
+			class="file-item flex items-center hover:bg-gray-200 cursor-pointer select-none {spacingConfig.verticalPadding} {spacingConfig.horizontalPadding}"
 			class:expanded={item.type === 'directory' && expandedFolders.has(item.path)}
 			class:active-file={item.type === 'file' && item.path === activeFilePath}
-			style="padding-left: {depth * 16 + 8}px"
+			style="padding-left: {depth * spacingConfig.indentSize + 8}px"
 			onclick={() => handleItemClick(item)}
 			oncontextmenu={(e) => handleContextMenu(e, item)}
 		>
 			{#if item.type === 'directory'}
-				<span class="mr-2 text-xs text-gray-500 arrow-indicator">
+				<span class="mr-2 text-gray-500 arrow-indicator {spacingConfig.fontSize}">
 					{#if expandedFolders.has(item.path)}
 						<!-- Down arrow -->
-						<svg class="w-3 h-3 inline" fill="currentColor" viewBox="0 0 12 12">
+						<svg class="{spacingConfig.iconSize} inline" fill="currentColor" viewBox="0 0 12 12">
 							<path d="M2 4 L6 8 L10 4 Z"/>
 						</svg>
 					{:else}
 						<!-- Right arrow -->
-						<svg class="w-3 h-3 inline" fill="currentColor" viewBox="0 0 12 12">
+						<svg class="{spacingConfig.iconSize} inline" fill="currentColor" viewBox="0 0 12 12">
 							<path d="M4 2 L8 6 L4 10 Z"/>
 						</svg>
 					{/if}
@@ -318,25 +351,25 @@
 				<span class="mr-2 text-blue-500">
 					{#if expandedFolders.has(item.path)}
 						<!-- Open folder icon -->
-						<svg class="w-4 h-4 inline" fill="currentColor" viewBox="0 0 20 20">
+						<svg class="{spacingConfig.iconSize} inline" fill="currentColor" viewBox="0 0 20 20">
 							<path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4l2 2h4a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd"/>
 						</svg>
 					{:else}
 						<!-- Closed folder icon -->
-						<svg class="w-4 h-4 inline" fill="currentColor" viewBox="0 0 20 20">
+						<svg class="{spacingConfig.iconSize} inline" fill="currentColor" viewBox="0 0 20 20">
 							<path d="M2 6a2 2 0 012-2h4l2 2h4a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"/>
 						</svg>
 					{/if}
 				</span>
 			{:else}
-				<span class="mr-2 ml-4 text-gray-600">
+				<span class="mr-2 text-gray-600" style="margin-left: {spacingConfig.indentSize}px">
 					<!-- Document icon -->
-					<svg class="w-4 h-4 inline" fill="currentColor" viewBox="0 0 20 20">
+					<svg class="{spacingConfig.iconSize} inline" fill="currentColor" viewBox="0 0 20 20">
 						<path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"/>
 					</svg>
 				</span>
 			{/if}
-			<span class="text-sm text-gray-800">{item.name}</span>
+			<span class="text-gray-800 {spacingConfig.fontSize}">{item.name}</span>
 		</div>
 		
 		{#if item.type === 'directory' && expandedFolders.has(item.path) && item.children}

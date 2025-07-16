@@ -36,17 +36,185 @@ This document outlines the plan to convert the Markdown Notes web application in
 - Limited plugin ecosystem
 - Requires Rust toolchain for development
 
-## Recommended Choice: Tauri
+## Recommended Choice: Hybrid Approach (Web App + Tauri Desktop)
 
-**Recommendation:** Tauri is the better choice for this project because:
-1. **Size matters:** Markdown editor should be lightweight
+**Recommendation:** Maintain both web app and Tauri desktop app from a single codebase because:
+1. **Best of both worlds:** Web accessibility + native performance
+2. **Single codebase:** Shared UI components and logic
+3. **User choice:** Users can choose their preferred platform
+4. **Progressive enhancement:** Features adapt to platform capabilities
+
+### Why Tauri for Desktop:
+1. **Size matters:** Markdown editor should be lightweight (~15MB vs ~150MB)
 2. **Security:** File system access with better sandboxing
 3. **Performance:** Better for text editing and file operations
 4. **Future-proof:** Modern architecture and growing adoption
 
+## Hybrid Architecture Strategy
+
+### Target Architecture
+```
+Shared Frontend (SvelteKit)
+├── Web App (with API backend)
+│   ├── Node.js server APIs
+│   └── Browser deployment
+└── Desktop App (with Tauri backend)
+    ├── Rust backend
+    └── Native deployment
+```
+
+### Backend Abstraction Layer
+
+The key to maintaining both versions is creating an abstraction layer:
+
+```javascript
+// src/lib/api/interface.js
+export class ApiInterface {
+  async listFiles(rootPath, path) {
+    throw new Error('Must be implemented by subclass');
+  }
+  
+  async readFile(filePath) {
+    throw new Error('Must be implemented by subclass');
+  }
+  
+  async writeFile(filePath, content) {
+    throw new Error('Must be implemented by subclass');
+  }
+}
+```
+
+### Web Implementation
+```javascript
+// src/lib/api/web.js
+import { ApiInterface } from './interface.js';
+
+export class WebApi extends ApiInterface {
+  async listFiles(rootPath, path) {
+    const response = await fetch(`/api/files?root=${encodeURIComponent(rootPath)}&path=${encodeURIComponent(path)}`);
+    return await response.json();
+  }
+  
+  async readFile(filePath) {
+    const response = await fetch(`/api/files?path=${encodeURIComponent(filePath)}`);
+    return await response.json();
+  }
+  
+  async writeFile(filePath, content) {
+    const response = await fetch('/api/files', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'save_file', path: filePath, content })
+    });
+    return await response.json();
+  }
+}
+```
+
+### Tauri Implementation
+```javascript
+// src/lib/api/tauri.js
+import { invoke } from '@tauri-apps/api/tauri';
+import { ApiInterface } from './interface.js';
+
+export class TauriApi extends ApiInterface {
+  async listFiles(rootPath, path) {
+    return await invoke('list_files', { rootPath, path });
+  }
+  
+  async readFile(filePath) {
+    return await invoke('read_file', { filePath });
+  }
+  
+  async writeFile(filePath, content) {
+    return await invoke('write_file', { filePath, content });
+  }
+}
+```
+
+### Runtime Detection
+```javascript
+// src/lib/api/factory.js
+import { WebApi } from './web.js';
+import { TauriApi } from './tauri.js';
+
+export function createApiClient() {
+  // Check if we're running in Tauri
+  if (typeof window !== 'undefined' && window.__TAURI__) {
+    return new TauriApi();
+  } else {
+    return new WebApi();
+  }
+}
+```
+
+### Project Structure
+```
+markdown-notes/
+├── src/                          # Shared frontend code
+│   ├── lib/
+│   │   ├── api/
+│   │   │   ├── interface.js      # Abstract interface
+│   │   │   ├── web.js           # Web implementation
+│   │   │   ├── tauri.js         # Tauri implementation
+│   │   │   └── factory.js       # Runtime detection
+│   │   └── components/          # Shared components
+│   └── routes/                  # SvelteKit routes
+├── src-tauri/                   # Tauri-specific code
+│   ├── src/
+│   │   ├── main.rs
+│   │   └── commands.rs          # Rust implementations
+│   └── tauri.conf.json
+├── src/routes/api/              # Web API routes (for web version)
+└── package.json
+```
+
+### Development Workflow
+```bash
+# Web development
+npm run dev          # SvelteKit dev server with Node.js APIs
+
+# Desktop development  
+npm run tauri dev    # Tauri dev with Rust backend
+
+# Build web version
+npm run build
+npm run preview
+
+# Build desktop version
+npm run tauri build  # Generates .exe, .deb, .dmg, etc.
+```
+
+### Benefits of Hybrid Approach
+- ✅ Single codebase for both platforms
+- ✅ Shared UI components and logic
+- ✅ Web app remains fully functional
+- ✅ Desktop app gets native benefits
+- ✅ Users can choose their preferred platform
+- ✅ Progressive enhancement based on capabilities
+
+### Trade-offs
+- 🔄 Need to maintain two backend implementations
+- 🔄 Testing required for both environments
+- 🔄 Some features might work differently (file system access)
+- 🔄 Bundle size considerations for web version
+
 ## Implementation Plan
 
-### Phase 1: Setup and Basic Conversion (Week 1)
+### Phase 0: Backend Abstraction (Week 0.5)
+
+#### 0.1 Create Abstraction Layer
+- [ ] Create `ApiInterface` abstract class
+- [ ] Implement `WebApi` class using existing API routes
+- [ ] Create `factory.js` for runtime detection
+- [ ] Update components to use abstracted API
+
+#### 0.2 Test Web Version
+- [ ] Ensure web version still works with abstraction
+- [ ] Verify all file operations work correctly
+- [ ] Test in both development and production builds
+
+### Phase 1: Tauri Setup and Basic Conversion (Week 1)
 
 #### 1.1 Environment Setup
 ```bash
@@ -326,11 +494,12 @@ async fn save_settings(settings: Settings) -> Result<(), String> {
 
 | Week | Focus | Deliverables |
 |------|-------|-------------|
+| 0.5 | Backend Abstraction | Web app with abstracted API layer |
 | 1 | Setup & Basic Conversion | Working Tauri app with basic UI |
-| 2 | File System Integration | All file operations working |
+| 2 | File System Integration | All file operations working in both versions |
 | 3 | Native Features | Menus, dialogs, system integration |
-| 4 | Security & Performance | Optimized and secure app |
-| 5 | Distribution | Packaged apps for all platforms |
+| 4 | Security & Performance | Optimized and secure apps |
+| 5 | Distribution | Packaged apps for all platforms + web deployment |
 
 ## Post-Migration Features
 
@@ -343,8 +512,112 @@ After successful migration, consider these desktop-specific features:
 5. **Themes:** More desktop-appropriate themes
 6. **Workspace Management:** Save/restore window layouts
 
+## Platform-Specific Features
+
+### Web App Exclusive Features
+- **Easy Sharing:** Send links to notes (with backend implementation)
+- **No Installation:** Access from any browser
+- **Cloud Deployment:** Host on Vercel, Netlify, etc.
+- **Cross-Device Access:** Same interface everywhere
+
+### Desktop App Exclusive Features
+- **Native File Associations:** Double-click .md files to open
+- **System Tray Integration:** Background operation
+- **Global Hotkeys:** Quick access shortcuts
+- **Offline First:** No internet dependency
+- **Better Performance:** Native file system access
+- **Native Dialogs:** Platform-specific file pickers
+
+### Progressive Enhancement Examples
+```javascript
+// Feature detection in components
+const isDesktop = typeof window !== 'undefined' && window.__TAURI__;
+
+// Conditional features
+{#if isDesktop}
+  <button onclick={openNativeFilePicker}>Browse Files</button>
+{:else}
+  <input type="file" accept=".md" />
+{/if}
+
+// Platform-specific settings
+const defaultSettings = {
+  ...baseSettings,
+  ...(isDesktop ? desktopDefaults : webDefaults)
+};
+```
+
+## Deployment Strategy
+
+### Web App Deployment
+```bash
+# Production build for web
+npm run build
+
+# Deploy to hosting platform
+vercel deploy
+# or
+netlify deploy
+```
+
+### Desktop App Distribution
+```bash
+# Build for all platforms
+npm run tauri build
+
+# Generated files:
+# - Windows: .msi, .exe
+# - macOS: .dmg, .app
+# - Linux: .deb, .AppImage
+```
+
+### Continuous Integration
+```yaml
+# .github/workflows/build.yml
+name: Build and Deploy
+
+on: [push, pull_request]
+
+jobs:
+  web-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+      - run: npm install
+      - run: npm run build
+      - run: npm run test
+      
+  desktop-build:
+    strategy:
+      matrix:
+        platform: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+      - uses: dtolnay/rust-toolchain@stable
+      - run: npm install
+      - run: npm run tauri build
+```
+
 ## Conclusion
 
-Converting to Tauri will provide a superior user experience while maintaining the current web-based UI. The migration can be done incrementally, ensuring the app remains functional throughout the process.
+The hybrid approach provides the best of both worlds:
 
-The estimated timeline is 4-5 weeks for a complete migration, with the ability to release beta versions after week 2 for community testing.
+### For Users:
+- **Choice:** Web browser or native desktop app
+- **Consistency:** Same interface and features across platforms
+- **Performance:** Native speed on desktop, web accessibility everywhere
+
+### For Developers:
+- **Single Codebase:** Maintain one UI codebase
+- **Incremental Migration:** Add desktop features without breaking web version
+- **Future-Proof:** Easy to add platform-specific enhancements
+
+### Migration Benefits:
+- **No Breaking Changes:** Web app continues to work during migration
+- **Beta Testing:** Desktop app can be tested alongside web version
+- **Gradual Rollout:** Users can migrate at their own pace
+
+The estimated timeline is 5-6 weeks for complete implementation, with both versions available for testing after week 2. This approach maximizes reach while providing optimal user experience on each platform.

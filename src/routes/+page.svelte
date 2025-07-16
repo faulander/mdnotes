@@ -528,6 +528,7 @@
 						{rootPath}
 						{expandedFolders}
 						activeFilePath={activeTab?.path}
+						spacing={currentSettings.fileTreeSpacing}
 						onFileSelect={handleFileSelect}
 						onContextMenu={handleContextMenu}
 						onExpandedFoldersChange={(folders) => expandedFolders = folders}
