@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  mdnotes:
+    build: .
+    container_name: mdnotes-app
+    ports:
+      - "3000:3000"
+    volumes:
+      # Persistent storage for notes
+      - ./notes:/app/notes
+      # Persistent storage for settings and pinned files
+      - mdnotes-data:/app/data
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - NOTES_DIR=/app/notes
+      - DATA_DIR=/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  mdnotes-data:
+    driver: local
