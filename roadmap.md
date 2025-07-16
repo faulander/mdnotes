@@ -42,5 +42,5 @@
 
 ### UI Improvements
 
-- Add smooth transition animation for Ctrl+B sidebar toggle
-- Improve sidebar show/hide user experience
+~~- Add smooth transition animation for Ctrl+B sidebar toggle~~
+~~- Improve sidebar show/hide user experience~~

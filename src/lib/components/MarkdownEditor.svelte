@@ -8,11 +8,71 @@
 	let { 
 		value = '', 
 		onChange = () => {},
-		darkMode = false
+		darkMode = false,
+		showToolbar = true
 	} = $props();
 	
 	let editorElement;
 	let editorView;
+	
+	// Toolbar actions
+	function insertText(before, after = '') {
+		if (!editorView) return;
+		
+		const state = editorView.state;
+		const selection = state.selection.main;
+		const selectedText = state.doc.sliceString(selection.from, selection.to);
+		
+		editorView.dispatch({
+			changes: {
+				from: selection.from,
+				to: selection.to,
+				insert: `${before}${selectedText}${after}`
+			},
+			selection: {
+				anchor: selection.from + before.length,
+				head: selection.from + before.length + selectedText.length
+			}
+		});
+		
+		editorView.focus();
+	}
+	
+	function insertHeading(level) {
+		insertText('#'.repeat(level) + ' ');
+	}
+	
+	function insertBold() {
+		insertText('**', '**');
+	}
+	
+	function insertItalic() {
+		insertText('*', '*');
+	}
+	
+	function insertCode() {
+		insertText('`', '`');
+	}
+	
+	function insertCodeBlock() {
+		insertText('```\n', '\n```');
+	}
+	
+	function insertLink() {
+		insertText('[', '](url)');
+	}
+	
+	function insertList() {
+		insertText('- ');
+	}
+	
+	function insertOrderedList() {
+		insertText('1. ');
+	}
+	
+	function insertQuote() {
+		insertText('> ');
+	}
 	
 	onMount(() => {
 		const extensions = [
@@ -73,7 +133,42 @@
 	});
 </script>
 
-<div class="h-full" bind:this={editorElement}></div>
+<div class="h-full flex flex-col">
+	<!-- Toolbar -->
+	{#if showToolbar}
+	<div class="flex items-center gap-1 p-2 border-b border-gray-200 bg-gray-50 flex-shrink-0" class:bg-gray-800={darkMode} class:border-gray-600={darkMode}>
+		<!-- Headings -->
+		<div class="flex items-center gap-1">
+			<button class="px-2 py-1 text-sm font-medium hover:bg-gray-200 rounded" class:hover:bg-gray-700={darkMode} class:text-gray-100={darkMode} onclick={() => insertHeading(1)} title="Heading 1">H1</button>
+			<button class="px-2 py-1 text-sm font-medium hover:bg-gray-200 rounded" class:hover:bg-gray-700={darkMode} class:text-gray-100={darkMode} onclick={() => insertHeading(2)} title="Heading 2">H2</button>
+			<button class="px-2 py-1 text-sm font-medium hover:bg-gray-200 rounded" class:hover:bg-gray-700={darkMode} class:text-gray-100={darkMode} onclick={() => insertHeading(3)} title="Heading 3">H3</button>
+		</div>
+		
+		<div class="w-px h-6 bg-gray-300 mx-1" class:bg-gray-600={darkMode}></div>
+		
+		<!-- Text formatting -->
+		<button class="px-2 py-1 text-sm font-bold hover:bg-gray-200 rounded" class:hover:bg-gray-700={darkMode} class:text-gray-100={darkMode} onclick={insertBold} title="Bold">B</button>
+		<button class="px-2 py-1 text-sm italic hover:bg-gray-200 rounded" class:hover:bg-gray-700={darkMode} class:text-gray-100={darkMode} onclick={insertItalic} title="Italic">I</button>
+		<button class="px-2 py-1 text-sm font-mono hover:bg-gray-200 rounded" class:hover:bg-gray-700={darkMode} class:text-gray-100={darkMode} onclick={insertCode} title="Inline code">`</button>
+		
+		<div class="w-px h-6 bg-gray-300 mx-1" class:bg-gray-600={darkMode}></div>
+		
+		<!-- Lists -->
+		<button class="px-2 py-1 text-sm hover:bg-gray-200 rounded" class:hover:bg-gray-700={darkMode} class:text-gray-100={darkMode} onclick={insertList} title="Bullet list">• List</button>
+		<button class="px-2 py-1 text-sm hover:bg-gray-200 rounded" class:hover:bg-gray-700={darkMode} class:text-gray-100={darkMode} onclick={insertOrderedList} title="Numbered list">1. List</button>
+		
+		<div class="w-px h-6 bg-gray-300 mx-1" class:bg-gray-600={darkMode}></div>
+		
+		<!-- Other -->
+		<button class="px-2 py-1 text-sm hover:bg-gray-200 rounded" class:hover:bg-gray-700={darkMode} class:text-gray-100={darkMode} onclick={insertLink} title="Link">Link</button>
+		<button class="px-2 py-1 text-sm hover:bg-gray-200 rounded" class:hover:bg-gray-700={darkMode} class:text-gray-100={darkMode} onclick={insertQuote} title="Quote">" Quote</button>
+		<button class="px-2 py-1 text-sm hover:bg-gray-200 rounded" class:hover:bg-gray-700={darkMode} class:text-gray-100={darkMode} onclick={insertCodeBlock} title="Code block">```</button>
+	</div>
+	{/if}
+	
+	<!-- Editor -->
+	<div class="flex-1" bind:this={editorElement}></div>
+</div>
 
 <style>
 	:global(.cm-editor) {

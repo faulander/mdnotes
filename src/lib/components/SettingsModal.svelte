@@ -188,6 +188,14 @@
 							<span class="text-sm">Show footer with file statistics</span>
 						</label>
 						
+						<label class="flex items-center gap-2">
+							<input
+								type="checkbox"
+								bind:checked={currentSettings.showToolbar}
+							/>
+							<span class="text-sm">Show editor toolbar for markdown formatting</span>
+						</label>
+						
 						<div>
 							<label class="block text-sm font-medium text-gray-700 mb-2">
 								Date/Time Format

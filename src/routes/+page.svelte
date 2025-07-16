@@ -192,16 +192,20 @@
 		const index = openTabs.indexOf(tab);
 		openTabs = openTabs.filter(t => t !== tab);
 		
-		if (activeTab === tab) {
+		// Use path comparison instead of object equality to avoid Svelte 5 proxy issues
+		if (activeTab && activeTab.path === tab.path) {
 			if (openTabs.length > 0) {
 				activeTab = openTabs[Math.max(0, index - 1)];
 			} else {
 				activeTab = null;
+				console.log('=== SETTING ACTIVE TAB TO NULL - SHOULD SHOW WELCOME SCREEN ===');
 			}
 		}
 		
 		console.log('Tab closed, remaining tabs:', openTabs.length);
 		console.log('New active tab:', activeTab?.name || 'none');
+		console.log('activeTab is null:', activeTab === null);
+		console.log('openTabs length:', openTabs.length);
 	}
 	
 	function handleFileSelect(fileItem) {
@@ -592,14 +596,14 @@
 				{#each openTabs as tab, index}
 					<div
 						class="flex items-center px-4 py-2 text-sm border-r border-gray-300 hover:bg-gray-100 gap-2"
-						class:bg-white={activeTab === tab && !isDarkMode}
-						class:bg-gray-50={activeTab !== tab && !isDarkMode}
-						class:bg-blue-500={activeTab === tab && !isDarkMode}
-						class:text-white={activeTab === tab && !isDarkMode}
-						class:bg-gray-700={activeTab === tab && isDarkMode}
-						class:bg-gray-800={activeTab !== tab && isDarkMode}
-						class:text-gray-100={activeTab === tab && isDarkMode}
-						class:border-blue-400={activeTab === tab}
+						class:bg-white={activeTab?.path === tab.path && !isDarkMode}
+						class:bg-gray-50={activeTab?.path !== tab.path && !isDarkMode}
+						class:bg-blue-500={activeTab?.path === tab.path && !isDarkMode}
+						class:text-white={activeTab?.path === tab.path && !isDarkMode}
+						class:bg-gray-700={activeTab?.path === tab.path && isDarkMode}
+						class:bg-gray-800={activeTab?.path !== tab.path && isDarkMode}
+						class:text-gray-100={activeTab?.path === tab.path && isDarkMode}
+						class:border-blue-400={activeTab?.path === tab.path}
 					>
 						<button
 							class="flex items-center gap-2 flex-1"
@@ -627,6 +631,7 @@
 		<!-- Content Area -->
 		<div class="flex-1 flex overflow-hidden">
 			{#if activeTab}
+				<!-- DEBUG: activeTab exists: {activeTab.name} -->
 				<div class="flex-1 p-4 overflow-hidden">
 					{#if isEditing}
 						<!-- Editor Mode -->
@@ -635,6 +640,7 @@
 								value={activeTab.content}
 								onChange={handleEditorChange}
 								darkMode={isDarkMode}
+								showToolbar={currentSettings.showToolbar}
 							/>
 						</div>
 					{:else}
@@ -647,6 +653,7 @@
 					{/if}
 				</div>
 			{:else}
+				<!-- DEBUG: activeTab is null, showing welcome screen -->
 				<!-- Welcome Screen -->
 				<div class="flex-1 flex items-center justify-center">
 					<div class="text-center text-gray-500" class:text-gray-400={isDarkMode}>
