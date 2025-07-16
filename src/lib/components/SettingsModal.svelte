@@ -174,6 +174,38 @@
 						{/if}
 					</div>
 				</div>
+				
+				<!-- Interface Settings -->
+				<div>
+					<h3 class="text-lg font-semibold mb-3">Interface</h3>
+					
+					<div class="space-y-4">
+						<label class="flex items-center gap-2">
+							<input
+								type="checkbox"
+								bind:checked={currentSettings.showFooter}
+							/>
+							<span class="text-sm">Show footer with file statistics</span>
+						</label>
+						
+						<div>
+							<label class="block text-sm font-medium text-gray-700 mb-2">
+								Date/Time Format
+							</label>
+							<select
+								class="w-full p-2 border border-gray-300 rounded"
+								bind:value={currentSettings.dateTimeFormat}
+							>
+								<option value="YYYY-MM-DD HH:mm:ss">2024-12-01 14:30:45</option>
+								<option value="DD/MM/YYYY HH:mm">01/12/2024 14:30</option>
+								<option value="MM/DD/YYYY HH:mm">12/01/2024 14:30</option>
+								<option value="YYYY-MM-DD">2024-12-01</option>
+								<option value="HH:mm:ss">14:30:45</option>
+								<option value="HH:mm">14:30</option>
+							</select>
+						</div>
+					</div>
+				</div>
 			</div>
 			
 			<div class="flex justify-between mt-8">

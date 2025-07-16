@@ -4,6 +4,7 @@
 	import FileTree from '$lib/components/FileTree.svelte';
 	import MarkdownEditor from '$lib/components/MarkdownEditor.svelte';
 	import SettingsModal from '$lib/components/SettingsModal.svelte';
+	import Footer from '$lib/components/Footer.svelte';
 	import { FileWatcher } from '$lib/fileWatcher.js';
 	import { settings } from '$lib/stores/settings.js';
 	import { applyTheme, watchSystemTheme } from '$lib/theme.js';
@@ -117,7 +118,8 @@
 			if (response.ok) {
 				console.log('Save successful, updating tab state');
 				activeTab.hasUnsavedChanges = false;
-				activeTab.originalContent = activeTab.content;
+				// Normalize the content when saving to ensure consistency
+				activeTab.originalContent = activeTab.content.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
 				openTabs = [...openTabs];
 				
 				// Mark file as recently saved to prevent auto-reload
@@ -161,13 +163,16 @@
 				return;
 			}
 			
+			// Normalize line endings to ensure consistent comparison
+			const normalizedContent = (data.content || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+			
 			const newTab = {
 				name: fileItem.name,
 				path: fileItem.path,
-				content: data.content || '',
-				originalContent: data.content || '',
+				content: normalizedContent,
+				originalContent: normalizedContent,
 				hasUnsavedChanges: false,
-				renderedContent: marked(data.content || '')
+				renderedContent: marked(normalizedContent)
 			};
 			
 			openTabs = [...openTabs, newTab];
@@ -323,7 +328,12 @@
 		if (activeTab) {
 			const oldHasUnsavedChanges = activeTab.hasUnsavedChanges;
 			activeTab.content = newContent;
-			activeTab.hasUnsavedChanges = activeTab.content !== activeTab.originalContent;
+			
+			// Normalize line endings for comparison to avoid false positives
+			const normalizedContent = activeTab.content.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+			const normalizedOriginal = activeTab.originalContent.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+			
+			activeTab.hasUnsavedChanges = normalizedContent !== normalizedOriginal;
 			activeTab.renderedContent = marked(activeTab.content);
 			openTabs = [...openTabs];
 			
@@ -333,6 +343,8 @@
 				oldHasUnsavedChanges,
 				contentLength: activeTab.content.length,
 				originalLength: activeTab.originalContent.length,
+				normalizedContentLength: normalizedContent.length,
+				normalizedOriginalLength: normalizedOriginal.length,
 				openTabsLength: openTabs.length
 			});
 		}
@@ -494,11 +506,14 @@
 <div class="flex h-screen">
 	<!-- Left Sidebar -->
 	{#if sidebarVisible}
-		<div class="bg-gray-100 border-r border-gray-300 flex flex-col relative h-full" style="width: {sidebarWidth}px;">
-			<div class="p-4 border-b border-gray-300 flex justify-between items-center flex-shrink-0">
-				<h2 class="text-lg font-semibold text-gray-800">Files</h2>
+		<div class="bg-gray-100 border-r border-gray-300 flex flex-col relative h-full" class:bg-gray-800={isDarkMode} class:border-gray-600={isDarkMode} style="width: {sidebarWidth}px;">
+			<div class="p-4 border-b border-gray-300 flex justify-between items-center flex-shrink-0" class:border-gray-600={isDarkMode}>
+				<h2 class="text-lg font-semibold text-gray-800 truncate flex-1 mr-2" class:text-gray-100={isDarkMode} title={rootPath}>
+					{rootPath ? rootPath.split('\\').pop() || rootPath.split('/').pop() || 'Files' : 'Files'}
+				</h2>
 				<button
-					class="p-1 hover:bg-gray-200 rounded"
+					class="p-1 hover:bg-gray-200 rounded flex-shrink-0"
+					class:hover:bg-gray-600={isDarkMode}
 					onclick={() => showSettings = true}
 					title="Settings"
 				>
@@ -512,6 +527,7 @@
 						bind:this={fileTreeComponent}
 						{rootPath}
 						{expandedFolders}
+						activeFilePath={activeTab?.path}
 						onFileSelect={handleFileSelect}
 						onContextMenu={handleContextMenu}
 						onExpandedFoldersChange={(folders) => expandedFolders = folders}
@@ -543,8 +559,14 @@
 				{#each openTabs as tab, index}
 					<div
 						class="flex items-center px-4 py-2 text-sm border-r border-gray-300 hover:bg-gray-100 gap-2"
-						class:bg-white={activeTab === tab}
-						class:bg-gray-50={activeTab !== tab}
+						class:bg-white={activeTab === tab && !isDarkMode}
+						class:bg-gray-50={activeTab !== tab && !isDarkMode}
+						class:bg-blue-500={activeTab === tab && !isDarkMode}
+						class:text-white={activeTab === tab && !isDarkMode}
+						class:bg-gray-700={activeTab === tab && isDarkMode}
+						class:bg-gray-800={activeTab !== tab && isDarkMode}
+						class:text-gray-100={activeTab === tab && isDarkMode}
+						class:border-blue-400={activeTab === tab}
 					>
 						<button
 							class="flex items-center gap-2 flex-1"
@@ -610,6 +632,15 @@
 				</div>
 			{/if}
 		</div>
+		
+		<!-- Footer -->
+		{#if currentSettings.showFooter}
+			<Footer 
+				{activeTab}
+				{isDarkMode}
+				dateTimeFormat={currentSettings.dateTimeFormat}
+			/>
+		{/if}
 	</div>
 </div>
 

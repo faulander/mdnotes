@@ -10,7 +10,9 @@ const defaultSettings = {
 	editorFontFamily: 'Fira Code, Consolas, Monaco, monospace',
 	sidebarWidth: 250,
 	autoSave: false,
-	autoSaveDelay: 2000
+	autoSaveDelay: 2000,
+	dateTimeFormat: 'YYYY-MM-DD HH:mm:ss',
+	showFooter: true
 };
 
 // Create settings store

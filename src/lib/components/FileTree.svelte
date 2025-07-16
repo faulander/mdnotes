@@ -4,6 +4,7 @@
 	let { 
 		rootPath = '', 
 		expandedFolders = new Set(),
+		activeFilePath = null,
 		onFileSelect = () => {}, 
 		onContextMenu = () => {},
 		onExpandedFoldersChange = () => {}
@@ -295,6 +296,7 @@
 		<div
 			class="file-item flex items-center py-1 px-2 hover:bg-gray-200 cursor-pointer select-none"
 			class:expanded={item.type === 'directory' && expandedFolders.has(item.path)}
+			class:active-file={item.type === 'file' && item.path === activeFilePath}
 			style="padding-left: {depth * 16 + 8}px"
 			onclick={() => handleItemClick(item)}
 			oncontextmenu={(e) => handleContextMenu(e, item)}
@@ -391,8 +393,26 @@
 		background-color: #f3f4f6;
 	}
 	
+	.file-item.active-file {
+		background-color: #3b82f6;
+		color: white;
+	}
+	
+	.file-item.active-file:hover {
+		background-color: #2563eb;
+	}
+	
 	:global(.dark) .file-item:hover {
 		background-color: var(--bg-tertiary);
+	}
+	
+	:global(.dark) .file-item.active-file {
+		background-color: #1d4ed8;
+		color: white;
+	}
+	
+	:global(.dark) .file-item.active-file:hover {
+		background-color: #1e40af;
 	}
 	
 	:global(.dark) .file-item:hover .text-gray-800 {
