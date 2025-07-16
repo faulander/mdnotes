@@ -4,11 +4,14 @@
 	let { 
 		rootPath = '', 
 		expandedFolders = new Set(),
+		pinnedFiles = new Set(),
 		activeFilePath = null,
 		spacing = 'normal',
 		onFileSelect = () => {}, 
 		onContextMenu = () => {},
-		onExpandedFoldersChange = () => {}
+		onExpandedFoldersChange = () => {},
+		onPinFile = () => {},
+		onUnpinFile = () => {}
 	} = $props();
 	
 	let fileTree = $state([]);
@@ -52,6 +55,27 @@
 	}
 	
 	let spacingConfig = $derived(getSpacingConfig(spacing));
+	
+	// Helper function to recursively find all files in the tree
+	function getAllFilesFromTree(items) {
+		let allFiles = [];
+		
+		function traverse(items) {
+			for (const item of items) {
+				if (item.type === 'file') {
+					allFiles.push(item);
+				} else if (item.type === 'directory' && item.children) {
+					traverse(item.children);
+				}
+			}
+		}
+		
+		traverse(items);
+		return allFiles;
+	}
+	
+	// Get all pinned files from the tree
+	let pinnedFilesInTree = $derived(getAllFilesFromTree(fileTree).filter(file => pinnedFiles.has(file.path)));
 	
 	async function loadDirectory(path = '') {
 		// Check cache first
@@ -339,6 +363,20 @@
 		</button>
 	</div>
 	
+	<!-- Pinned Files Section -->
+	{#if pinnedFilesInTree.length > 0}
+		<div class="pinned-files-section border-b border-gray-200 mb-2">
+			<div class="px-2 py-1 text-xs font-semibold text-gray-600 uppercase tracking-wider">
+				Pinned Files
+			</div>
+			<div class="px-2 pb-2">
+				{#each pinnedFilesInTree as item}
+					{@render renderPinnedFile(item)}
+				{/each}
+			</div>
+		</div>
+	{/if}
+	
 	{#each fileTree as item}
 		{@render renderTreeItem(item, 0)}
 	{/each}
@@ -353,7 +391,7 @@
 {#snippet renderTreeItem(item, depth)}
 	<div class="file-item-container">
 		<div
-			class="file-item flex items-center hover:bg-gray-200 cursor-pointer select-none {spacingConfig.verticalPadding} {spacingConfig.horizontalPadding}"
+			class="file-item group flex items-center hover:bg-gray-200 cursor-pointer select-none {spacingConfig.verticalPadding} {spacingConfig.horizontalPadding}"
 			class:expanded={item.type === 'directory' && expandedFolders.has(item.path)}
 			class:active-file={item.type === 'file' && item.path === activeFilePath}
 			style="padding-left: {depth * spacingConfig.indentSize + 8}px"
@@ -395,7 +433,35 @@
 					</svg>
 				</span>
 			{/if}
-			<span class="text-gray-800 {spacingConfig.fontSize}">{item.name}</span>
+			<span class="text-gray-800 {spacingConfig.fontSize} flex-1">{item.name}</span>
+			
+			<!-- Pin/Unpin icon for files -->
+			{#if item.type === 'file'}
+				<button 
+					class="pin-button ml-2 p-1 rounded hover:bg-gray-300 opacity-0 group-hover:opacity-100 transition-opacity"
+					onclick={(e) => {
+						e.stopPropagation();
+						if (pinnedFiles.has(item.path)) {
+							onUnpinFile(item);
+						} else {
+							onPinFile(item);
+						}
+					}}
+					title={pinnedFiles.has(item.path) ? 'Unpin file' : 'Pin file'}
+				>
+					{#if pinnedFiles.has(item.path)}
+						<!-- Unpin icon (filled pin) -->
+						<svg class="w-3 h-3 text-orange-500" fill="currentColor" viewBox="0 0 24 24">
+							<path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+						</svg>
+					{:else}
+						<!-- Pin icon (outline pin) -->
+						<svg class="w-3 h-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+						</svg>
+					{/if}
+				</button>
+			{/if}
 		</div>
 		
 		{#if item.type === 'directory' && expandedFolders.has(item.path) && item.children}
@@ -403,6 +469,38 @@
 				{@render renderTreeItem(child, depth + 1)}
 			{/each}
 		{/if}
+	</div>
+{/snippet}
+
+{#snippet renderPinnedFile(item)}
+	<div class="file-item-container">
+		<div
+			class="file-item group flex items-center hover:bg-blue-50 cursor-pointer select-none {spacingConfig.verticalPadding} {spacingConfig.horizontalPadding} rounded mb-1"
+			onclick={() => handleItemClick(item)}
+		>
+			<span class="mr-2 text-gray-600">
+				<!-- Document icon -->
+				<svg class="{spacingConfig.iconSize} inline" fill="currentColor" viewBox="0 0 20 20">
+					<path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"/>
+				</svg>
+			</span>
+			<span class="text-gray-800 {spacingConfig.fontSize} flex-1">{item.name}</span>
+			
+			<!-- Unpin icon -->
+			<button 
+				class="pin-button ml-2 p-1 rounded hover:bg-gray-300 opacity-0 group-hover:opacity-100 transition-opacity"
+				onclick={(e) => {
+					e.stopPropagation();
+					onUnpinFile(item);
+				}}
+				title="Unpin file"
+			>
+				<!-- Unpin icon (filled pin) -->
+				<svg class="w-3 h-3 text-orange-500" fill="currentColor" viewBox="0 0 24 24">
+					<path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+				</svg>
+			</button>
+		</div>
 	</div>
 {/snippet}
 

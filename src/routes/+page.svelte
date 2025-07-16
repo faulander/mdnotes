@@ -28,6 +28,7 @@
 	let sidebarWidth = $state(250);
 	let isResizing = $state(false);
 	let expandedFolders = $state(new Set());
+	let pinnedFiles = $state(new Set());
 	
 	function toggleSidebar() {
 		console.log('Toggling sidebar. Current expanded folders:', Array.from(expandedFolders));
@@ -210,6 +211,41 @@
 	
 	function handleFileSelect(fileItem) {
 		openFile(fileItem);
+	}
+	
+	function pinFile(fileItem) {
+		console.log('Pinning file:', fileItem.name);
+		pinnedFiles.add(fileItem.path);
+		pinnedFiles = new Set(pinnedFiles); // Trigger reactivity
+		savePinnedFiles();
+	}
+	
+	function unpinFile(fileItem) {
+		console.log('Unpinning file:', fileItem.name);
+		pinnedFiles.delete(fileItem.path);
+		pinnedFiles = new Set(pinnedFiles); // Trigger reactivity
+		savePinnedFiles();
+	}
+	
+	function savePinnedFiles() {
+		if (typeof window !== 'undefined') {
+			localStorage.setItem('markdown-notes-pinned-files', JSON.stringify(Array.from(pinnedFiles)));
+		}
+	}
+	
+	function loadPinnedFiles() {
+		if (typeof window !== 'undefined') {
+			const stored = localStorage.getItem('markdown-notes-pinned-files');
+			if (stored) {
+				try {
+					const parsed = JSON.parse(stored);
+					pinnedFiles = new Set(parsed);
+				} catch (error) {
+					console.error('Error loading pinned files:', error);
+					pinnedFiles = new Set();
+				}
+			}
+		}
 	}
 	
 	function handleContextMenu(action, item) {
@@ -404,6 +440,9 @@
 		
 		document.addEventListener('keydown', handleKeydown);
 		
+		// Load pinned files from localStorage
+		loadPinnedFiles();
+		
 		// Get current working directory from server
 		try {
 			const response = await fetch('/api/cwd');
@@ -543,11 +582,14 @@
 						bind:this={fileTreeComponent}
 						{rootPath}
 						{expandedFolders}
+						{pinnedFiles}
 						activeFilePath={activeTab?.path}
 						spacing={currentSettings.fileTreeSpacing}
 						onFileSelect={handleFileSelect}
 						onContextMenu={handleContextMenu}
 						onExpandedFoldersChange={(folders) => expandedFolders = folders}
+						onPinFile={pinFile}
+						onUnpinFile={unpinFile}
 					/>
 				{:else}
 					<div class="text-sm text-gray-500 p-4">
