@@ -83,6 +83,7 @@
 			}
 			
 			const items = data.items || [];
+			console.log(`Loaded ${items.length} items for path "${path || 'root'}":`, items);
 			// Cache the result for 30 seconds
 			directoryCache.set(cacheKey, items);
 			setTimeout(() => {
@@ -99,6 +100,7 @@
 	
 	async function loadFileTree() {
 		fileTree = await loadDirectory();
+		console.log('FileTree loaded:', fileTree);
 	}
 	
 	async function toggleFolder(folderPath) {
@@ -156,7 +158,10 @@
 	}
 	
 	function handleContextMenuAction(action) {
-		if (selectedItem) {
+		if (action === 'create_folder_root') {
+			// Create a root-level folder (no parent item)
+			onContextMenu(action, { type: 'directory', path: '', name: 'Root' });
+		} else if (selectedItem) {
 			onContextMenu(action, selectedItem);
 		}
 		closeContextMenu();
@@ -182,22 +187,31 @@
 			
 			console.log('File tree reloaded, restoring expanded folders...');
 			
-			// Restore expanded folders more efficiently
-			const loadPromises = [];
+			// Restore expanded folders in the correct order (parent to child)
+			const sortedExpandedFolders = Array.from(previouslyExpanded).sort((a, b) => {
+				// Sort by path depth (fewer slashes = higher priority)
+				return a.split('/').length - b.split('/').length;
+			});
+			
+			console.log('Restoring folders in order:', sortedExpandedFolders);
+			
 			const newExpandedFolders = new Set(expandedFolders);
 			
-			for (const folderPath of previouslyExpanded) {
-				const folder = findItemByPath(fileTree, folderPath);
-				if (folder) {
-					console.log('Reloading children for folder:', folderPath);
-					loadPromises.push(
-						loadDirectory(folderPath).then(children => {
-							folder.children = children;
-						})
-					);
-				} else {
-					// Folder no longer exists, remove from expanded folders
-					console.log('Folder no longer exists, removing from expanded:', folderPath);
+			// Restore folders sequentially to ensure parent folders are loaded first
+			for (const folderPath of sortedExpandedFolders) {
+				try {
+					const folder = findItemByPath(fileTree, folderPath);
+					if (folder) {
+						console.log('Reloading children for folder:', folderPath);
+						folder.children = await loadDirectory(folderPath);
+						fileTree = [...fileTree]; // Update the tree after each folder is loaded
+					} else {
+						// Folder no longer exists, remove from expanded folders
+						console.log('Folder no longer exists, removing from expanded:', folderPath);
+						newExpandedFolders.delete(folderPath);
+					}
+				} catch (error) {
+					console.error('Error restoring folder:', folderPath, error);
 					newExpandedFolders.delete(folderPath);
 				}
 			}
@@ -205,12 +219,6 @@
 			// Update expanded folders in parent if changed
 			if (newExpandedFolders.size !== expandedFolders.size) {
 				onExpandedFoldersChange(newExpandedFolders);
-			}
-			
-			// Load all folders in parallel instead of sequentially
-			if (loadPromises.length > 0) {
-				await Promise.all(loadPromises);
-				fileTree = [...fileTree];
 			}
 			
 			console.log('File tree refresh completed');
@@ -224,21 +232,25 @@
 		
 		console.log('Starting to restore expanded folders:', Array.from(expandedFolders));
 		
-		// Simple sequential restoration to avoid race conditions
-		for (const folderPath of expandedFolders) {
+		// Sort folders by depth (parent folders first)
+		const sortedFolders = Array.from(expandedFolders).sort((a, b) => {
+			return a.split('/').length - b.split('/').length;
+		});
+		
+		// Sequential restoration to ensure parent folders are loaded first
+		for (const folderPath of sortedFolders) {
 			try {
 				const folder = findItemByPath(fileTree, folderPath);
 				if (folder && !folder.children) {
 					console.log('Restoring folder:', folderPath);
 					folder.children = await loadDirectory(folderPath);
+					fileTree = [...fileTree]; // Update tree after each folder
 				}
 			} catch (error) {
 				console.error('Error restoring folder:', folderPath, error);
 			}
 		}
 		
-		// Update the tree once at the end
-		fileTree = [...fileTree];
 		console.log('Finished restoring expanded folders');
 	}
 
@@ -313,6 +325,20 @@
 </script>
 
 <div class="file-tree">
+	<!-- New Folder Button -->
+	<div class="new-folder-button border-b border-gray-200 p-2 mb-2">
+		<button 
+			type="button"
+			class="w-full flex items-center gap-2 px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 rounded transition-colors cursor-pointer border border-gray-300 bg-white shadow-sm hover:shadow-md active:shadow-sm"
+			onclick={() => handleContextMenuAction('create_folder_root')}
+		>
+			<svg class="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+				<path d="M2 6a2 2 0 012-2h4l2 2h4a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"/>
+			</svg>
+			<span>New Folder</span>
+		</button>
+	</div>
+	
 	{#each fileTree as item}
 		{@render renderTreeItem(item, 0)}
 	{/each}
@@ -521,5 +547,21 @@
 		background-color: transparent !important;
 		background: none !important;
 		color: inherit !important;
+	}
+	
+	/* Dark mode support for new folder button */
+	:global(.dark) .new-folder-button {
+		border-color: var(--border-color);
+	}
+	
+	:global(.dark) .new-folder-button button {
+		color: var(--text-primary);
+		background-color: var(--bg-primary);
+		border-color: var(--border-color);
+	}
+	
+	:global(.dark) .new-folder-button button:hover {
+		background-color: var(--bg-secondary);
+		border-color: var(--border-color);
 	}
 </style>

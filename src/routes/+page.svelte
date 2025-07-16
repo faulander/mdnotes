@@ -219,6 +219,7 @@
 				showModal = true;
 				break;
 			case 'create_folder':
+			case 'create_folder_root':
 				modalType = 'create_folder';
 				modalTitle = 'Create New Folder';
 				showModal = true;
@@ -265,21 +266,26 @@
 	async function handleModalSubmit() {
 		if (!modalInput.trim()) return;
 		
+		const requestData = {
+			action: modalType === 'create_folder' ? 'create_directory' : modalType,
+			path: modalContext.path,
+			name: modalInput,
+			content: modalType === 'create_file' ? '# New Document\n\nStart writing here...' : undefined,
+			rootPath
+		};
+		
+		console.log('Sending request:', requestData);
+		
 		try {
 			const response = await fetch('/api/files', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					action: modalType,
-					path: modalContext.path,
-					name: modalInput,
-					content: modalType === 'create_file' ? '# New Document\n\nStart writing here...' : undefined,
-					rootPath
-				})
+				body: JSON.stringify(requestData)
 			});
 			
 			if (response.ok) {
 				const result = await response.json();
+				console.log('API response:', result);
 				console.log('File created successfully, closing modal');
 				showModal = false;
 				modalInput = '';
@@ -308,6 +314,7 @@
 			} else {
 				const error = await response.json();
 				console.error('Error creating item:', error);
+				console.error('Response status:', response.status);
 				alert(`Error: ${error.error || 'Unknown error'}`);
 			}
 		} catch (error) {
@@ -639,7 +646,9 @@
 			<Footer 
 				{activeTab}
 				{isDarkMode}
+				{isEditing}
 				dateTimeFormat={currentSettings.dateTimeFormat}
+				onModeToggle={() => isEditing = !isEditing}
 			/>
 		{/if}
 	</div>
@@ -655,6 +664,7 @@
 				class="w-full p-2 border border-gray-300 rounded mb-4"
 				placeholder="Enter name..."
 				bind:value={modalInput}
+				autofocus
 				onkeydown={(e) => {
 					if (e.key === 'Enter') {
 						handleModalSubmit();

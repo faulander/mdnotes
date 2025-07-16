@@ -49,15 +49,13 @@ export async function GET({ url }) {
 				const entryStats = await fs.promises.stat(entryPath);
 				
 				if (entry.isDirectory()) {
-					// Only include directories that contain .md files
-					if (await hasMarkdownFiles(entryPath)) {
-						items.push({
-							name: entry.name,
-							type: 'directory',
-							path: path.relative(rootPath, entryPath),
-							modified: entryStats.mtime
-						});
-					}
+					// Include all directories (not just those with .md files)
+					items.push({
+						name: entry.name,
+						type: 'directory',
+						path: path.relative(rootPath, entryPath),
+						modified: entryStats.mtime
+					});
 				} else if (entry.isFile() && entry.name.endsWith('.md')) {
 					items.push({
 						name: entry.name,

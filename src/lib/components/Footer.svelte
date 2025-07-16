@@ -4,7 +4,9 @@
 	let { 
 		activeTab = null,
 		dateTimeFormat = 'YYYY-MM-DD HH:mm:ss',
-		isDarkMode = false
+		isDarkMode = false,
+		isEditing = true,
+		onModeToggle = () => {}
 	} = $props();
 	
 	let currentTime = $state(new Date());
@@ -101,10 +103,18 @@
 		<!-- Editor Mode -->
 		{#if activeTab}
 			<span class="text-gray-500">|</span>
-			<span class="font-medium" title="Current mode">
-				{#if activeTab.isEditing !== false}Editor{:else}Preview{/if}
-			</span>
+			<button 
+				class="font-medium hover:bg-gray-200 px-2 py-1 rounded transition-colors cursor-pointer"
+				title="Click to toggle between Editor and Preview mode"
+				onclick={onModeToggle}
+			>
+				{#if isEditing}Editor{:else}Preview{/if}
+			</button>
 		{/if}
+		
+		<!-- Version -->
+		<span class="text-gray-500">|</span>
+		<span title="Application version">v0.1.0</span>
 	</div>
 </footer>
 
@@ -117,5 +127,16 @@
 		background-color: var(--bg-secondary);
 		border-color: var(--border-color);
 		color: var(--text-secondary);
+	}
+	
+	/* Dark mode support for mode toggle button */
+	:global(.dark) footer button {
+		color: var(--text-primary) !important;
+		background-color: transparent !important;
+	}
+	
+	:global(.dark) footer button:hover {
+		background-color: var(--bg-tertiary) !important;
+		color: var(--text-primary) !important;
 	}
 </style>
