@@ -5,13 +5,16 @@
 		rootPath = '', 
 		expandedFolders = new Set(),
 		pinnedFiles = new Set(),
+		recentFiles = [],
 		activeFilePath = null,
 		spacing = 'normal',
+		recentFilesCount = 5,
 		onFileSelect = () => {}, 
 		onContextMenu = () => {},
 		onExpandedFoldersChange = () => {},
 		onPinFile = () => {},
-		onUnpinFile = () => {}
+		onUnpinFile = () => {},
+		onRecentFileSelect = () => {}
 	} = $props();
 	
 	let fileTree = $state([]);
@@ -296,6 +299,22 @@
 		}
 	}
 	
+	// Method to navigate to a file and expand its parent directories
+	export function navigateToFile(filePath) {
+		// Get the directory path of the file
+		const pathParts = filePath.split('/');
+		const fileName = pathParts.pop();
+		
+		// Expand all parent directories
+		let currentPath = '';
+		for (const part of pathParts) {
+			if (part) {
+				currentPath = currentPath ? `${currentPath}/${part}` : part;
+				expandFolder(currentPath);
+			}
+		}
+	}
+	
 	// Track previous rootPath to detect actual changes
 	let previousRootPath = $state(rootPath);
 	
@@ -362,6 +381,33 @@
 			<span>New Rootfolder</span>
 		</button>
 	</div>
+	
+	<!-- Recent Files Section -->
+	{#if recentFilesCount > 0 && recentFiles.length > 0}
+		<div class="recent-files-section border-b border-gray-200 mb-2">
+			<div class="px-2 py-1 text-xs font-semibold text-gray-600 uppercase tracking-wider">
+				Recent Files ({recentFiles.length}) - Max: {recentFilesCount}
+			</div>
+			<div class="px-2 pb-2">
+				{#each recentFiles.slice(0, recentFilesCount) as recentFile}
+					<div
+						class="flex items-center gap-2 {spacingConfig.verticalPadding} {spacingConfig.horizontalPadding} rounded hover:bg-gray-100 cursor-pointer group"
+						onclick={() => onRecentFileSelect(recentFile)}
+					>
+						<svg class="{spacingConfig.iconSize} text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+						</svg>
+						<span class="flex-1 truncate {spacingConfig.fontSize} text-gray-900 dark:text-gray-100">
+							{recentFile?.name || 'No name'}
+						</span>
+						<span class="text-xs text-gray-400 opacity-0 group-hover:opacity-100">
+							{recentFile?.timestamp ? new Date(recentFile.timestamp).toLocaleTimeString() : 'No time'}
+						</span>
+					</div>
+				{/each}
+			</div>
+		</div>
+	{/if}
 	
 	<!-- Pinned Files Section -->
 	{#if pinnedFilesInTree.length > 0}

@@ -14,7 +14,8 @@ const defaultSettings = {
 	dateTimeFormat: 'YYYY-MM-DD HH:mm:ss',
 	showFooter: true,
 	fileTreeSpacing: 'normal', // 'compact', 'normal', 'comfortable'
-	showToolbar: true
+	showToolbar: true,
+	recentFilesCount: 5 // 0-10, 0 hides the section
 };
 
 // Create settings store

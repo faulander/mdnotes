@@ -226,6 +226,22 @@
 								<option value="comfortable">Comfortable (more space)</option>
 							</select>
 						</div>
+						
+						<div>
+							<label class="block text-sm font-medium text-gray-700 mb-2">
+								Recent Files Count
+							</label>
+							<input
+								type="number"
+								class="w-full p-2 border border-gray-300 rounded"
+								bind:value={currentSettings.recentFilesCount}
+								min="0"
+								max="10"
+							/>
+							<p class="text-xs text-gray-500 mt-1">
+								Number of recently opened files to show (0 to hide section)
+							</p>
+						</div>
 					</div>
 				</div>
 			</div>

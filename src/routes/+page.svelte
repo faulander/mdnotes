@@ -29,6 +29,7 @@
 	let isResizing = $state(false);
 	let expandedFolders = $state(new Set());
 	let pinnedFiles = $state(new Set());
+	let recentFiles = $state([]);
 	
 	function toggleSidebar() {
 		console.log('Toggling sidebar. Current expanded folders:', Array.from(expandedFolders));
@@ -150,6 +151,8 @@
 		const existingTab = openTabs.find(tab => tab.path === fileItem.path);
 		if (existingTab) {
 			activeTab = existingTab;
+			// Still add to recent files even if already open
+			addToRecentFiles(fileItem);
 			console.timeEnd(`Opening file: ${fileItem.name}`);
 			return;
 		}
@@ -178,6 +181,10 @@
 			
 			openTabs = [...openTabs, newTab];
 			activeTab = newTab;
+			
+			// Add to recent files
+			addToRecentFiles(fileItem);
+			
 			console.timeEnd(`Opening file: ${fileItem.name}`);
 		} catch (error) {
 			console.error('Error opening file:', error);
@@ -230,6 +237,112 @@
 	function savePinnedFiles() {
 		if (typeof window !== 'undefined') {
 			localStorage.setItem('markdown-notes-pinned-files', JSON.stringify(Array.from(pinnedFiles)));
+		}
+	}
+	
+	function loadRecentFiles() {
+		if (typeof window !== 'undefined') {
+			const stored = localStorage.getItem('markdown-notes-recent-files');
+			if (stored) {
+				try {
+					recentFiles = JSON.parse(stored);
+				} catch (error) {
+					console.error('Error loading recent files:', error);
+					recentFiles = [];
+				}
+			}
+		}
+	}
+	
+	function saveRecentFiles() {
+		if (typeof window !== 'undefined') {
+			localStorage.setItem('markdown-notes-recent-files', JSON.stringify(recentFiles));
+		}
+	}
+	
+	function addToRecentFiles(fileItem) {
+		// Remove if already exists
+		recentFiles = recentFiles.filter(file => file.path !== fileItem.path);
+		
+		// Add to beginning - create a plain object to avoid proxy issues
+		const recentFile = {
+			name: String(fileItem.name),
+			path: String(fileItem.path),
+			timestamp: Date.now()
+		};
+		
+		recentFiles.unshift(recentFile);
+		
+		// Keep only the number specified in settings
+		const maxFiles = currentSettings.recentFilesCount || 5;
+		recentFiles = recentFiles.slice(0, maxFiles);
+		
+		// Trigger reactivity
+		recentFiles = [...recentFiles];
+		
+		// Save to localStorage
+		saveRecentFiles();
+	}
+	
+	async function openRecentFile(recentFile) {
+		// Create a file item object like the one from FileTree
+		const fileItem = {
+			name: recentFile.name,
+			path: recentFile.path,
+			type: 'file'
+		};
+		
+		// Navigate to the file's directory in the tree
+		if (fileTreeComponent && fileTreeComponent.navigateToFile) {
+			fileTreeComponent.navigateToFile(recentFile.path);
+		}
+		
+		// Open the file without adding to recent files (to maintain order)
+		await openFileWithoutRecentTracking(fileItem);
+	}
+	
+	async function openFileWithoutRecentTracking(fileItem) {
+		console.time(`Opening file: ${fileItem.name}`);
+		
+		// Check if file is already open
+		const existingTab = openTabs.find(tab => tab.path === fileItem.path);
+		if (existingTab) {
+			activeTab = existingTab;
+			console.timeEnd(`Opening file: ${fileItem.name}`);
+			return;
+		}
+		
+		try {
+			const response = await fetch(`/api/files?root=${encodeURIComponent(rootPath)}&path=${encodeURIComponent(fileItem.path)}`);
+			const data = await response.json();
+			
+			if (data.error) {
+				console.error('Error loading file:', data.error);
+				console.timeEnd(`Opening file: ${fileItem.name}`);
+				return;
+			}
+			
+			// Normalize line endings to ensure consistent comparison
+			const normalizedContent = (data.content || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+			
+			const newTab = {
+				name: fileItem.name,
+				path: fileItem.path,
+				content: normalizedContent,
+				originalContent: normalizedContent,
+				hasUnsavedChanges: false,
+				renderedContent: marked(normalizedContent)
+			};
+			
+			openTabs = [...openTabs, newTab];
+			activeTab = newTab;
+			
+			// Don't add to recent files when opening from recent files list
+			
+			console.timeEnd(`Opening file: ${fileItem.name}`);
+		} catch (error) {
+			console.error('Error opening file:', error);
+			console.timeEnd(`Opening file: ${fileItem.name}`);
 		}
 	}
 	
@@ -443,6 +556,9 @@
 		// Load pinned files from localStorage
 		loadPinnedFiles();
 		
+		// Load recent files from localStorage
+		loadRecentFiles();
+		
 		// Get current working directory from server
 		try {
 			const response = await fetch('/api/cwd');
@@ -583,13 +699,16 @@
 						{rootPath}
 						{expandedFolders}
 						{pinnedFiles}
+						{recentFiles}
 						activeFilePath={activeTab?.path}
 						spacing={currentSettings.fileTreeSpacing}
+						recentFilesCount={currentSettings.recentFilesCount}
 						onFileSelect={handleFileSelect}
 						onContextMenu={handleContextMenu}
 						onExpandedFoldersChange={(folders) => expandedFolders = folders}
 						onPinFile={pinFile}
 						onUnpinFile={unpinFile}
+						onRecentFileSelect={openRecentFile}
 					/>
 				{:else}
 					<div class="text-sm text-gray-500 p-4">
