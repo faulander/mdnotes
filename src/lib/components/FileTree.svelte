@@ -483,13 +483,6 @@
 				{/each}
 			</div>
 		</div>
-	{:else}
-		<!-- Debug: Show when no pinned files are detected -->
-		<div class="pinned-files-debug mb-2 border-b border-gray-200">
-			<div class="px-2 py-1 text-xs font-semibold tracking-wider text-red-600 uppercase">
-				DEBUG: No Pinned Files Detected (Tree: {fileTree.length}, Pinned: {pinnedFiles.size}, Result: {pinnedFilesInTree.length})
-			</div>
-		</div>
 	{/if}
 
 	<!-- File Tree Display -->
