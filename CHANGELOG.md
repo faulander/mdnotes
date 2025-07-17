@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2024-07-17
+
+### Added
+- **Export Functionality**: Export markdown documents to HTML and PDF formats
+  - HTML export with embedded CSS and syntax highlighting
+  - PDF export with proper formatting and print optimization
+  - GitHub-like styling preserved in exported documents
+  - Automatic file download functionality
+- **New Keyboard Shortcut**: `Ctrl+P` (Windows/Linux) or `Cmd+P` (Mac) to open export dialog
+- **Export Modal**: User-friendly interface for selecting export format
+- **Export API**: Server-side export processing with Puppeteer for PDF generation
+
+### Technical Features
+- **Puppeteer Integration**: High-quality PDF generation with proper formatting
+- **Standalone HTML Export**: Complete HTML documents with embedded styling
+- **Syntax Highlighting in Exports**: Code blocks maintain their highlighting in exported formats
+- **Responsive Export Styling**: Exported documents are optimized for both screen and print
+
+### Dependencies
+- Added: `puppeteer@^24.14.0` for PDF generation
+
 ## [0.4.2] - 2024-07-17
 
 ### Changed

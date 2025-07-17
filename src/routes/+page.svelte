@@ -6,6 +6,7 @@
 	import FileTree from '$lib/components/FileTree.svelte';
 	import MarkdownEditor from '$lib/components/MarkdownEditor.svelte';
 	import SettingsModal from '$lib/components/SettingsModal.svelte';
+	import ExportModal from '$lib/components/ExportModal.svelte';
 	import Footer from '$lib/components/Footer.svelte';
 
 	// Configure marked to support GitHub Flavored Markdown (GFM) with syntax highlighting
@@ -46,9 +47,70 @@
 	let expandedFolders = $state(new Set());
 	let pinnedFiles = $state(new Set());
 	let recentFiles = $state([]);
+	let showExportModal = $state(false);
 
 	function toggleSidebar() {
 		sidebarVisible = !sidebarVisible;
+	}
+
+	function openExportModal() {
+		if (activeTab) {
+			showExportModal = true;
+		}
+	}
+
+	function downloadFile(blob, filename) {
+		const url = window.URL.createObjectURL(blob);
+		const a = document.createElement('a');
+		a.href = url;
+		a.download = filename;
+		document.body.appendChild(a);
+		a.click();
+		document.body.removeChild(a);
+		window.URL.revokeObjectURL(url);
+	}
+
+	async function handleExport(event) {
+		const { format, content, filename, path } = event.detail;
+		
+		console.log('Export started:', { format, filename, contentLength: content.length });
+		
+		try {
+			const response = await fetch('/api/export', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					format,
+					content,
+					filename,
+					path,
+					rootPath
+				})
+			});
+
+			console.log('Export response status:', response.status);
+			console.log('Export response headers:', Object.fromEntries(response.headers.entries()));
+
+			if (response.ok) {
+				const blob = await response.blob();
+				console.log('Export blob size:', blob.size, 'type:', blob.type);
+				
+				const suggestedName = `${filename.replace(/\.md$/, '')}.${format}`;
+				downloadFile(blob, suggestedName);
+				
+				console.log('Export completed successfully');
+				showExportModal = false;
+			} else {
+				const error = await response.json();
+				console.error('Export failed:', error);
+				alert(`Export failed: ${error.error || 'Unknown error'}`);
+				showExportModal = false;
+			}
+		} catch (error) {
+			console.error('Export error:', error);
+			alert('Export failed. Please try again.');
+			showExportModal = false;
+		}
 	}
 
 	function startResize(event) {
@@ -95,6 +157,9 @@
 				} else if (event.key === 'E' && event.shiftKey) {
 					event.preventDefault();
 					isEditing = !isEditing;
+				} else if (event.key === 'p') {
+					event.preventDefault();
+					openExportModal();
 				}
 			}
 		} catch (error) {
@@ -858,6 +923,13 @@
 								class:text-gray-100={isDarkMode}>Ctrl+S</kbd
 							> Save file
 						</p>
+						<p class="text-sm">
+							<kbd
+								class="rounded bg-gray-100 px-2 py-1 text-gray-800"
+								class:bg-gray-700={isDarkMode}
+								class:text-gray-100={isDarkMode}>Ctrl+P</kbd
+							> Export to HTML/PDF
+						</p>
 					</div>
 				</div>
 			{/if}
@@ -915,3 +987,12 @@
 
 <!-- Settings Modal -->
 <SettingsModal isOpen={showSettings} onClose={() => (showSettings = false)} />
+
+<!-- Export Modal -->
+<ExportModal 
+	isOpen={showExportModal} 
+	{activeTab} 
+	{isDarkMode}
+	onClose={() => (showExportModal = false)}
+	onExport={handleExport}
+/>

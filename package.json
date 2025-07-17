@@ -1,7 +1,7 @@
 {
 	"name": "md",
 	"private": true,
-	"version": "0.4.2",
+	"version": "0.5.0",
 	"type": "module",
 	"scripts": {
 		"dev": "vite dev",
@@ -46,6 +46,7 @@
 		"marked": "^16.0.0",
 		"marked-gfm-heading-id": "^4.1.2",
 		"marked-highlight": "^2.2.2",
+		"puppeteer": "^24.14.0",
 		"wx-svelte-filemanager": "^2.1.0"
 	}
 }

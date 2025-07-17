@@ -21,6 +21,7 @@ A local-first markdown note-taking application built with SvelteKit and Tailwind
 - **Syntax Highlighting**: Markdown syntax highlighting in the editor
 - **Line Wrapping**: No horizontal scrolling - text wraps naturally
 - **Unsaved Changes Indicator**: Visual indicator (●) shows unsaved changes in tabs
+- **Export Functionality**: Export documents to HTML or PDF formats with preserved formatting
 
 ### 🎨 Themes & Customization
 
@@ -33,6 +34,7 @@ A local-first markdown note-taking application built with SvelteKit and Tailwind
 - `Ctrl+B` (Windows/Linux) or `Cmd+B` (Mac): Toggle sidebar
 - `Ctrl+S` (Windows/Linux) or `Cmd+S` (Mac): Save current file
 - `Ctrl+Shift+E` (Windows/Linux) or `Cmd+Shift+E` (Mac): Toggle editor/preview mode
+- `Ctrl+P` (Windows/Linux) or `Cmd+P` (Mac): Export to HTML/PDF
 
 ### 🔧 Settings
 
@@ -188,6 +190,21 @@ The formatting toolbar can be fully customized through Settings:
 - **Switch Tabs**: Click on tab headers to switch between files
 - **Close Tabs**: Click the × button on each tab
 - **Unsaved Indicators**: Orange dot shows unsaved changes
+
+### Export Documents
+
+Export your markdown documents to HTML or PDF formats:
+
+- **Quick Export**: Press `Ctrl+P` (Windows/Linux) or `Cmd+P` (Mac) to open the export dialog
+- **Format Selection**: Choose between HTML (.html) or PDF (.pdf) formats
+- **Preserved Formatting**: All markdown formatting, syntax highlighting, and styling are preserved
+- **Automatic Download**: Files are automatically downloaded to your default download location
+
+**Export Features:**
+- **HTML Export**: Creates a standalone HTML file with embedded CSS and syntax highlighting
+- **PDF Export**: Generates a high-quality PDF with proper formatting and print optimization
+- **GitHub-like Styling**: Exported documents maintain the same clean, readable styling as the preview
+- **Syntax Highlighting**: Code blocks retain their syntax highlighting in exported documents
 
 ### Customization
 
@@ -443,7 +460,7 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 - [ ] Search functionality across all notes
 - [ ] Tag system for organizing notes
-- [ ] Export to PDF/HTML
+- [x] Export to PDF/HTML
 - [ ] Plugin system for extensions
 - [ ] Mobile responsive design
 - [ ] Collaboration features
