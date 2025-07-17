@@ -10,7 +10,8 @@
 		onChange = () => {}, 
 		darkMode = false, 
 		showToolbar = true,
-		toolbarButtons = {}
+		toolbarButtons = {},
+		lineWrap = true
 	} = $props();
 
 	let editorElement;
@@ -95,7 +96,6 @@
 		const extensions = [
 			basicSetup,
 			markdown(),
-			EditorView.lineWrapping,
 			EditorView.updateListener.of((update) => {
 				if (update.docChanged) {
 					const newContent = update.state.doc.toString();
@@ -119,9 +119,21 @@
 				'.cm-scroller': {
 					fontFamily: "'Fira Code', 'Consolas', 'Monaco', monospace",
 					overflow: 'auto'
-				}
+				},
+				// Ensure horizontal scrolling works when line wrap is disabled
+				...(!lineWrap && {
+					'.cm-editor .cm-scroller': {
+						overflowX: 'auto',
+						overflowY: 'auto'
+					}
+				})
 			})
 		];
+
+		// Add line wrapping conditionally
+		if (lineWrap) {
+			extensions.push(EditorView.lineWrapping);
+		}
 
 		if (darkMode) {
 			extensions.push(oneDark);
@@ -144,12 +156,14 @@
 		};
 	});
 
-	// Recreate editor when dark mode changes
+	// Recreate editor when dark mode or line wrap changes
 	let previousDarkMode = darkMode;
+	let previousLineWrap = lineWrap;
 	$effect(() => {
-		if (editorElement && darkMode !== previousDarkMode) {
+		if (editorElement && (darkMode !== previousDarkMode || lineWrap !== previousLineWrap)) {
 			createEditor();
 			previousDarkMode = darkMode;
+			previousLineWrap = lineWrap;
 		}
 	});
 
@@ -338,7 +352,7 @@
 	{/if}
 
 	<!-- Editor -->
-	<div class="flex-1 overflow-hidden" bind:this={editorElement}></div>
+	<div class="flex-1" class:overflow-hidden={lineWrap} class:overflow-auto={!lineWrap} bind:this={editorElement}></div>
 </div>
 
 <style>

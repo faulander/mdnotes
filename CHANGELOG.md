@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2024-07-17
+
+### Added
+- **Editor Line Wrapping Control**: New setting to control line wrapping in the markdown editor
+  - Toggle button in footer shows current state (Wrap: ON/OFF)
+  - Setting available in Settings modal under Interface options
+  - Real-time editor updates when toggled
+  - Persistent setting saved across sessions
+  - When enabled (default): Long lines wrap within editor window, no horizontal scrolling
+  - When disabled: Long lines extend horizontally, requiring horizontal scrolling
+
+### Enhanced
+- **Footer Interface**: Added line wrap toggle button next to editor/preview mode toggle
+- **Settings Modal**: Added editor line wrapping checkbox setting
+- **CodeMirror Integration**: Dynamic line wrapping configuration based on user preference
+- **User Experience**: Instant feedback and real-time editor updates
+
 ## [0.5.1] - 2024-07-17
 
 ### Changed

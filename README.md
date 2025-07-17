@@ -22,6 +22,7 @@ A local-first markdown note-taking application built with SvelteKit and Tailwind
 - **Line Wrapping**: No horizontal scrolling - text wraps naturally
 - **Unsaved Changes Indicator**: Visual indicator (●) shows unsaved changes in tabs
 - **Export Functionality**: Export documents to HTML or PDF formats with preserved formatting
+- **Editor Line Wrapping**: Toggle line wrapping in the markdown editor
 
 ### 🎨 Themes & Customization
 
@@ -41,6 +42,7 @@ A local-first markdown note-taking application built with SvelteKit and Tailwind
 - **Root Directory**: Choose your notes folder location
 - **Editor Preferences**: Customize font size and font family
 - **Interface Options**: Configure toolbar visibility, customize toolbar buttons, file tree spacing, and recent files count
+- **Editor Settings**: Enable or disable line wrapping in the markdown editor
 - **Auto-save**: Optional automatic saving with configurable delay
 - **Behavior Options**: Configure confirmation dialogs and other preferences
 
@@ -209,6 +211,19 @@ Export your markdown documents to HTML or PDF formats:
 - **PDF Export**: Generates a high-quality PDF with proper formatting and print optimization
 - **GitHub-like Styling**: Exported documents maintain the same clean, readable styling as the preview
 - **Syntax Highlighting**: Code blocks retain their syntax highlighting in exported documents
+
+### Editor Line Wrapping
+
+Control how long lines are displayed in the markdown editor:
+
+- **Quick Toggle**: Click the "Wrap: ON/OFF" button in the footer to instantly toggle line wrapping
+- **Settings Control**: Access the line wrapping setting in the Settings modal under Interface options
+- **Real-time Editor Updates**: Changes are applied immediately to the editor
+- **Persistent Setting**: Your line wrapping preference is saved and remembered across sessions
+
+**How it works:**
+- **Wrap: ON** - Long lines wrap to the next line within the editor window (default, no horizontal scrolling)
+- **Wrap: OFF** - Long lines extend horizontally, requiring horizontal scrolling to see the full line
 
 ### Customization
 

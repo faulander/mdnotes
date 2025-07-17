@@ -16,6 +16,7 @@ const defaultSettings = {
 	fileTreeSpacing: 'normal', // 'compact', 'normal', 'comfortable'
 	showToolbar: true,
 	recentFilesCount: 5, // 0-10, 0 hides the section
+	editorLineWrap: true, // Enable line wrapping in the editor (no horizontal scroll)
 	toolbarButtons: {
 		headings: true,
 		bold: true,

@@ -24,6 +24,7 @@
 		}
 	}));
 
+	// Set fixed markdown options
 	marked.setOptions({
 		gfm: true,
 		breaks: true
@@ -63,6 +64,13 @@
 		if (activeTab) {
 			showExportModal = true;
 		}
+	}
+
+	function toggleLineWrap() {
+		const newValue = !currentSettings.editorLineWrap;
+		settings.updateSetting('editorLineWrap', newValue);
+		
+		// The editor will be updated automatically through props
 	}
 
 	function downloadFile(blob, filename) {
@@ -905,18 +913,19 @@
 		{/if}
 
 		<!-- Content Area -->
-		<div class="flex flex-1 overflow-hidden">
+		<div class="flex flex-1" class:overflow-hidden={!isEditing || currentSettings.editorLineWrap} class:overflow-auto={isEditing && !currentSettings.editorLineWrap}>
 			{#if activeTab}
-				<div class="flex-1 p-4 overflow-hidden">
+				<div class="flex-1 p-4" class:overflow-hidden={!isEditing || currentSettings.editorLineWrap} class:overflow-auto={isEditing && !currentSettings.editorLineWrap}>
 					{#if isEditing}
 						<!-- Editor Mode -->
-						<div class="h-full rounded border border-gray-300">
+						<div class="h-full rounded border border-gray-300" class:overflow-auto={!currentSettings.editorLineWrap}>
 							<MarkdownEditor
 								value={activeTab.content}
 								onChange={handleEditorChange}
 								darkMode={isDarkMode}
 								showToolbar={currentSettings.showToolbar}
 								toolbarButtons={currentSettings.toolbarButtons}
+								lineWrap={currentSettings.editorLineWrap}
 							/>
 						</div>
 					{:else}
@@ -981,7 +990,9 @@
 				{isDarkMode}
 				{isEditing}
 				dateTimeFormat={currentSettings.dateTimeFormat}
+				editorLineWrap={currentSettings.editorLineWrap}
 				onModeToggle={() => (isEditing = !isEditing)}
+				onLineWrapToggle={toggleLineWrap}
 			/>
 		{/if}
 	</div>

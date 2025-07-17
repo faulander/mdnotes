@@ -7,7 +7,9 @@
 		dateTimeFormat = 'YYYY-MM-DD HH:mm:ss',
 		isDarkMode = false,
 		isEditing = true,
-		onModeToggle = () => {}
+		onModeToggle = () => {},
+		editorLineWrap = true,
+		onLineWrapToggle = () => {}
 	} = $props();
 
 	let currentTime = $state(new Date());
@@ -115,10 +117,23 @@
 			<span class="text-gray-500">|</span>
 			<button
 				class="cursor-pointer rounded px-2 py-1 font-medium transition-colors hover:bg-gray-200"
+				class:hover:bg-gray-600={isDarkMode}
 				title="Click to toggle between Editor and Preview mode"
 				onclick={onModeToggle}
 			>
 				{#if isEditing}Editor{:else}Preview{/if}
+			</button>
+			
+			<!-- Line Wrap Toggle -->
+			<button
+				class="cursor-pointer rounded px-2 py-1 font-medium transition-colors hover:bg-gray-200"
+				class:hover:bg-gray-600={isDarkMode}
+				class:text-blue-600={editorLineWrap}
+				class:text-blue-400={editorLineWrap && isDarkMode}
+				title="Click to toggle line wrapping in editor (wrap vs horizontal scroll)"
+				onclick={onLineWrapToggle}
+			>
+				{#if editorLineWrap}Wrap: ON{:else}Wrap: OFF{/if}
 			</button>
 		{/if}
 

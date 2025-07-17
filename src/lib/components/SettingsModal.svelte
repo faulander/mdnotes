@@ -267,6 +267,21 @@
 								Number of recently opened files to show (0 to hide section)
 							</p>
 						</div>
+
+						<!-- Editor Line Wrap -->
+						<div>
+							<label class="mb-2 block text-sm font-medium text-gray-700">
+								<input
+									type="checkbox"
+									class="mr-2"
+									bind:checked={currentSettings.editorLineWrap}
+								/>
+								Enable Line Wrapping in Editor
+							</label>
+							<p class="ml-6 mt-1 text-xs text-gray-500">
+								When enabled, long lines wrap in the editor. When disabled, use horizontal scrolling.
+							</p>
+						</div>
 					</div>
 				</div>
 			</div>
