@@ -1,4 +1,4 @@
-# Markdown Notes
+# MDNOTES
 
 A local-first markdown note-taking application built with SvelteKit and Tailwind CSS. Create, edit, and organize your markdown documents with a clean, intuitive interface featuring a file explorer, tabbed editing, and real-time preview.
 
@@ -156,6 +156,7 @@ Your notes will be stored in the `./notes` directory, and settings are persisted
 The formatting toolbar can be fully customized through Settings:
 
 **Available Toolbar Buttons:**
+
 - **Headings**: H1, H2, H3 buttons for different heading levels
 - **Text Formatting**: Bold, italic, strikethrough, inline code
 - **Code Blocks**: Insert code blocks with syntax highlighting
@@ -166,6 +167,7 @@ The formatting toolbar can be fully customized through Settings:
 - **Horizontal Rule**: Insert divider lines (advanced)
 
 **How to Customize:**
+
 1. Open Settings (⚙️ icon in sidebar)
 2. Navigate to "Interface" section
 3. Ensure "Show editor toolbar" is enabled
@@ -173,6 +175,7 @@ The formatting toolbar can be fully customized through Settings:
 5. Click "Save" to apply changes
 
 **Default Configuration:**
+
 - Most commonly used buttons are enabled by default (headings, bold, italic, code, links, lists, quotes)
 - Advanced features like tables and horizontal rules are disabled by default but can be enabled as needed
 
@@ -201,6 +204,7 @@ Export your markdown documents to HTML or PDF formats:
 - **Automatic Download**: Files are automatically downloaded to your default download location
 
 **Export Features:**
+
 - **HTML Export**: Creates a standalone HTML file with embedded CSS and syntax highlighting
 - **PDF Export**: Generates a high-quality PDF with proper formatting and print optimization
 - **GitHub-like Styling**: Exported documents maintain the same clean, readable styling as the preview
@@ -265,8 +269,8 @@ src/
 1. **Fork the repository**
 
    ```bash
-   git clone https://github.com/yourusername/markdown-notes.git
-   cd markdown-notes
+   git clone https://github.com/faulander/mdnotes.git
+   cd mdnotes
    ```
 
 2. **Install dependencies**
@@ -360,8 +364,8 @@ We welcome contributions! Please follow these guidelines:
 1. **Fork and clone**
 
    ```bash
-   git clone https://github.com/yourusername/markdown-notes.git
-   cd markdown-notes
+   git clone https://github.com/faulander/mdnotes.git
+   cd mdnotes
    git checkout -b feature/your-feature-name
    ```
 
