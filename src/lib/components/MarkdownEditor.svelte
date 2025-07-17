@@ -80,13 +80,16 @@
 			EditorView.lineWrapping,
 			EditorView.updateListener.of((update) => {
 				if (update.docChanged) {
-					onChange(update.state.doc.toString());
+					const newContent = update.state.doc.toString();
+					// Update tracking variable to prevent unnecessary updates
+					lastFileContent = newContent;
+					onChange(newContent);
 				}
 			}),
 			EditorView.theme({
 				'&': {
-					height: '100%',
-					fontSize: '14px'
+					fontSize: '14px',
+					height: '100%'
 				},
 				'.cm-content': {
 					padding: '12px',
@@ -96,7 +99,8 @@
 					height: '100%'
 				},
 				'.cm-scroller': {
-					height: '100%'
+					fontFamily: "'Fira Code', 'Consolas', 'Monaco', monospace",
+					overflow: 'auto'
 				}
 			})
 		];
@@ -123,22 +127,43 @@
 	});
 
 	// Recreate editor when dark mode changes
+	let previousDarkMode = darkMode;
 	$effect(() => {
-		if (editorElement) {
+		if (editorElement && darkMode !== previousDarkMode) {
 			createEditor();
+			previousDarkMode = darkMode;
 		}
 	});
 
-	// Update editor content when value prop changes
+	// Track the last file content to detect file switches
+	let lastFileContent = value;
+	
+	// Only update editor when switching to a different file
+	let updateTimeout;
 	$effect(() => {
-		if (editorView && value !== editorView.state.doc.toString()) {
-			editorView.dispatch({
-				changes: {
-					from: 0,
-					to: editorView.state.doc.length,
-					insert: value
+		if (editorView) {
+			// Only update if the new value is significantly different (likely a file switch)
+			const currentContent = editorView.state.doc.toString();
+			
+			// If the value prop is very different from current editor content, it's likely a file switch
+			if (value !== currentContent && value !== lastFileContent) {
+				// Clear any pending updates
+				if (updateTimeout) {
+					clearTimeout(updateTimeout);
 				}
-			});
+				
+				// Use immediate update for better performance
+				editorView.dispatch({
+					changes: {
+						from: 0,
+						to: editorView.state.doc.length,
+						insert: value
+					},
+					// Reset scroll position to top for new file
+					selection: { anchor: 0, head: 0 }
+				});
+				lastFileContent = value;
+			}
 		}
 	});
 </script>
@@ -247,15 +272,20 @@
 	{/if}
 
 	<!-- Editor -->
-	<div class="flex-1" bind:this={editorElement}></div>
+	<div class="flex-1 overflow-hidden" bind:this={editorElement}></div>
 </div>
 
 <style>
-	:global(.cm-editor) {
-		height: 100%;
+	:global(.cm-editor.cm-focused) {
+		outline: none;
 	}
-
+	
+	:global(.cm-editor) {
+		height: 100% !important;
+	}
+	
 	:global(.cm-scroller) {
-		height: 100%;
+		height: 100% !important;
+		overflow-y: auto !important;
 	}
 </style>

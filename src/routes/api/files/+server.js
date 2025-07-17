@@ -146,7 +146,7 @@ export async function POST({ request }) {
 
 			case 'save_file': {
 				const targetPath = path.resolve(rootPath, filePath);
-				await fs.promises.writeFile(targetPath, content);
+				await fs.promises.writeFile(targetPath, content, 'utf8');
 				return json({ success: true });
 			}
 

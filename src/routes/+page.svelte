@@ -104,10 +104,23 @@
 			});
 
 			if (response.ok) {
-				activeTab.hasUnsavedChanges = false;
-				// Normalize the content when saving to ensure consistency
-				activeTab.originalContent = activeTab.content.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-				openTabs = [...openTabs];
+				// Normalize once for performance
+				const normalizedContent = activeTab.content.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+				
+				// Create updated tab object to ensure reactivity
+				const updatedTab = {
+					...activeTab,
+					hasUnsavedChanges: false,
+					originalContent: normalizedContent
+				};
+				
+				// Update the tab in the array
+				const tabIndex = openTabs.findIndex(tab => tab.path === activeTab.path);
+				if (tabIndex !== -1) {
+					openTabs[tabIndex] = updatedTab;
+					activeTab = updatedTab;
+					openTabs = [...openTabs];
+				}
 
 				// Mark file as recently saved to prevent auto-reload
 				recentlySavedFiles.add(activeTab.path);
@@ -435,20 +448,56 @@
 		}
 	}
 
+	// Debounce the markdown rendering to improve performance
+	let renderTimeout;
+	
 	function handleEditorChange(newContent) {
 		if (activeTab) {
-			const oldHasUnsavedChanges = activeTab.hasUnsavedChanges;
-			activeTab.content = newContent;
+			// Create a new tab object to ensure reactivity
+			const updatedTab = {
+				...activeTab,
+				content: newContent,
+				renderedContent: activeTab.renderedContent // Keep existing rendered content initially
+			};
 
 			// Normalize line endings for comparison to avoid false positives
-			const normalizedContent = activeTab.content.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-			const normalizedOriginal = activeTab.originalContent
+			const normalizedContent = updatedTab.content.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+			const normalizedOriginal = updatedTab.originalContent
 				.replace(/\r\n/g, '\n')
 				.replace(/\r/g, '\n');
 
-			activeTab.hasUnsavedChanges = normalizedContent !== normalizedOriginal;
-			activeTab.renderedContent = marked(activeTab.content);
-			openTabs = [...openTabs];
+			updatedTab.hasUnsavedChanges = normalizedContent !== normalizedOriginal;
+			
+			// Update the tab in the array
+			const tabIndex = openTabs.findIndex(tab => tab.path === activeTab.path);
+			if (tabIndex !== -1) {
+				openTabs[tabIndex] = updatedTab;
+				activeTab = updatedTab;
+				openTabs = [...openTabs];
+			}
+			
+			// Debounce the markdown rendering to avoid blocking on every keystroke
+			if (renderTimeout) {
+				clearTimeout(renderTimeout);
+			}
+			renderTimeout = setTimeout(() => {
+				if (activeTab && activeTab.path === updatedTab.path) {
+					const renderedContent = marked(newContent);
+					
+					// Update rendered content
+					const finalUpdatedTab = {
+						...activeTab,
+						renderedContent
+					};
+					
+					const finalTabIndex = openTabs.findIndex(tab => tab.path === activeTab.path);
+					if (finalTabIndex !== -1) {
+						openTabs[finalTabIndex] = finalUpdatedTab;
+						activeTab = finalUpdatedTab;
+						openTabs = [...openTabs];
+					}
+				}
+			}, 300); // 300ms delay for markdown rendering
 		}
 	}
 
@@ -738,7 +787,7 @@
 		<!-- Content Area -->
 		<div class="flex flex-1 overflow-hidden">
 			{#if activeTab}
-				<div class="flex-1 overflow-hidden p-4">
+				<div class="flex-1 p-4 overflow-hidden">
 					{#if isEditing}
 						<!-- Editor Mode -->
 						<div class="h-full rounded border border-gray-300">
@@ -751,12 +800,10 @@
 						</div>
 					{:else}
 						<!-- Preview Mode -->
-						<div
-							class="prose prose-sm h-full max-w-none overflow-y-auto"
-							class:prose-invert={isDarkMode}
-						>
+						<div class="h-full overflow-y-auto">
 							<div
-								class="rounded border border-gray-200 p-4"
+								class="github-markdown max-w-none rounded border border-gray-200 p-6"
+								class:github-markdown-dark={isDarkMode}
 								class:bg-white={!isDarkMode}
 								class:bg-gray-800={isDarkMode}
 								class:border-gray-600={isDarkMode}

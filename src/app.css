@@ -142,3 +142,210 @@ body {
 	background: none !important;
 	color: inherit !important;
 }
+
+/* GitHub-like Markdown Styling */
+.github-markdown {
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+	font-size: 16px;
+	line-height: 1.5;
+	word-wrap: break-word;
+}
+
+.github-markdown h1,
+.github-markdown h2,
+.github-markdown h3,
+.github-markdown h4,
+.github-markdown h5,
+.github-markdown h6 {
+	margin-top: 24px;
+	margin-bottom: 16px;
+	font-weight: 600;
+	line-height: 1.25;
+}
+
+.github-markdown h1 {
+	font-size: 2em;
+	border-bottom: 1px solid #d1d5db;
+	padding-bottom: 0.3em;
+}
+
+.github-markdown h2 {
+	font-size: 1.5em;
+	border-bottom: 1px solid #d1d5db;
+	padding-bottom: 0.3em;
+}
+
+.github-markdown h3 {
+	font-size: 1.25em;
+}
+
+.github-markdown h4 {
+	font-size: 1em;
+}
+
+.github-markdown h5 {
+	font-size: 0.875em;
+}
+
+.github-markdown h6 {
+	font-size: 0.85em;
+	color: #6b7280;
+}
+
+.github-markdown p {
+	margin-bottom: 16px;
+}
+
+.github-markdown blockquote {
+	margin: 0 0 16px 0;
+	padding: 0 1em;
+	color: #6b7280;
+	border-left: 0.25em solid #d1d5db;
+}
+
+.github-markdown ul,
+.github-markdown ol {
+	margin-bottom: 16px;
+	padding-left: 2em;
+}
+
+.github-markdown li {
+	margin-bottom: 0.25em;
+}
+
+.github-markdown li > p {
+	margin-bottom: 0.5em;
+}
+
+.github-markdown pre {
+	background-color: #f6f8fa;
+	border-radius: 6px;
+	font-size: 85%;
+	line-height: 1.45;
+	overflow: auto;
+	padding: 16px;
+	margin-bottom: 16px;
+}
+
+.github-markdown code {
+	background-color: rgba(175, 184, 193, 0.2);
+	border-radius: 3px;
+	font-size: 85%;
+	margin: 0;
+	padding: 0.2em 0.4em;
+	font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
+}
+
+.github-markdown pre code {
+	background-color: transparent;
+	border-radius: 0;
+	font-size: 100%;
+	padding: 0;
+}
+
+.github-markdown table {
+	border-collapse: collapse;
+	border-spacing: 0;
+	display: block;
+	overflow: auto;
+	width: 100%;
+	margin-bottom: 16px;
+}
+
+.github-markdown table th,
+.github-markdown table td {
+	border: 1px solid #d1d5db;
+	padding: 6px 13px;
+}
+
+.github-markdown table th {
+	background-color: #f6f8fa;
+	font-weight: 600;
+}
+
+.github-markdown table tr:nth-child(2n) {
+	background-color: #f6f8fa;
+}
+
+.github-markdown hr {
+	background-color: #d1d5db;
+	border: 0;
+	height: 0.25em;
+	margin: 24px 0;
+}
+
+.github-markdown a {
+	color: #0969da;
+	text-decoration: none;
+}
+
+.github-markdown a:hover {
+	text-decoration: underline;
+}
+
+.github-markdown strong {
+	font-weight: 600;
+}
+
+.github-markdown em {
+	font-style: italic;
+}
+
+.github-markdown del {
+	text-decoration: line-through;
+}
+
+/* Dark mode for GitHub markdown */
+.github-markdown-dark h1,
+.github-markdown-dark h2 {
+	border-bottom-color: #374151;
+}
+
+.github-markdown-dark h6 {
+	color: #9ca3af;
+}
+
+.github-markdown-dark blockquote {
+	color: #9ca3af;
+	border-left-color: #374151;
+}
+
+.github-markdown-dark pre {
+	background-color: #1f2937;
+}
+
+.github-markdown-dark code {
+	background-color: rgba(156, 163, 175, 0.3);
+}
+
+.github-markdown-dark table th,
+.github-markdown-dark table td {
+	border-color: #374151;
+}
+
+.github-markdown-dark table th {
+	background-color: #1f2937;
+}
+
+.github-markdown-dark table tr:nth-child(2n) {
+	background-color: #1f2937;
+}
+
+.github-markdown-dark hr {
+	background-color: #374151;
+}
+
+.github-markdown-dark a {
+	color: #58a6ff;
+}
+
+/* GitHub-like syntax highlighting hints */
+.github-markdown pre.language-javascript,
+.github-markdown pre.language-js {
+	background-color: #f6f8fa;
+}
+
+.github-markdown-dark pre.language-javascript,
+.github-markdown-dark pre.language-js {
+	background-color: #0d1117;
+}
