@@ -7,8 +7,14 @@ import hljs from 'highlight.js';
 marked.use(markedHighlight({
 	langPrefix: 'hljs language-',
 	highlight(code, lang) {
+		if (!lang) return code;
 		const language = hljs.getLanguage(lang) ? lang : 'plaintext';
-		return hljs.highlight(code, { language }).value;
+		try {
+			return hljs.highlight(code, { language }).value;
+		} catch (error) {
+			console.error('Highlight.js error:', error);
+			return code;
+		}
 	}
 }));
 

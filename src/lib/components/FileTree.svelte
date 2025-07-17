@@ -460,8 +460,8 @@
 
 	<!-- Pinned Files Section -->
 	{#if pinnedFilesInTree.length > 0}
-		<div class="pinned-files-section mb-2 border-b border-gray-200">
-			<div class="px-2 py-1 text-xs font-semibold tracking-wider text-gray-600 uppercase">
+		<div class="pinned-files-section mb-2 border-b border-gray-200 dark:border-gray-600">
+			<div class="px-2 py-1 text-xs font-semibold tracking-wider text-gray-700 dark:text-gray-400 uppercase">
 				Pinned Files ({pinnedFilesInTree.length})
 			</div>
 			<div class="px-2 pb-2">

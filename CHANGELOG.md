@@ -14,11 +14,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Provides more space for recent files, pinned files, and directory navigation
   - Better visual hierarchy and improved user experience
 
+### Fixed
+- **Syntax Highlighting**: Fixed HTML escaping issues in markdown preview
+  - Code blocks now display properly with syntax highlighting
+  - Resolved multiple HTML escaping that caused garbled output
+  - Improved error handling for highlight.js integration
+  - Enhanced markdown rendering stability
+
 ### UI/UX Improvements
 - **Enhanced Sidebar Header**: Simplified header design with centered folder name
 - **Bottom Action Panel**: Both "New Rootfolder" and "Settings" buttons now at bottom
 - **Better Space Utilization**: Maximized content area for file tree navigation
 - **Improved Accessibility**: Action buttons are more prominent and clearly labeled
+- **Consistent Section Styling**: Fixed header styling between recent files and pinned files sections
 
 ## [0.5.0] - 2024-07-17
 

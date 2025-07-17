@@ -13,8 +13,14 @@
 	marked.use(markedHighlight({
 		langPrefix: 'hljs language-',
 		highlight(code, lang) {
+			if (!lang) return code;
 			const language = hljs.getLanguage(lang) ? lang : 'plaintext';
-			return hljs.highlight(code, { language }).value;
+			try {
+				return hljs.highlight(code, { language }).value;
+			} catch (error) {
+				console.error('Highlight.js error:', error);
+				return code;
+			}
 		}
 	}));
 
@@ -563,19 +569,23 @@
 			}
 			renderTimeout = setTimeout(() => {
 				if (activeTab && activeTab.path === updatedTab.path) {
-					const renderedContent = marked(newContent);
-					
-					// Update rendered content
-					const finalUpdatedTab = {
-						...activeTab,
-						renderedContent
-					};
-					
-					const finalTabIndex = openTabs.findIndex(tab => tab.path === activeTab.path);
-					if (finalTabIndex !== -1) {
-						openTabs[finalTabIndex] = finalUpdatedTab;
-						activeTab = finalUpdatedTab;
-						openTabs = [...openTabs];
+					try {
+						const renderedContent = marked(newContent);
+						
+						// Update rendered content
+						const finalUpdatedTab = {
+							...activeTab,
+							renderedContent
+						};
+						
+						const finalTabIndex = openTabs.findIndex(tab => tab.path === activeTab.path);
+						if (finalTabIndex !== -1) {
+							openTabs[finalTabIndex] = finalUpdatedTab;
+							activeTab = finalUpdatedTab;
+							openTabs = [...openTabs];
+						}
+					} catch (error) {
+						console.error('Markdown rendering error:', error);
 					}
 				}
 			}, 300); // 300ms delay for markdown rendering
