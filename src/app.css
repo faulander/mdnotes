@@ -2,6 +2,10 @@
 @plugin '@tailwindcss/forms';
 @plugin '@tailwindcss/typography';
 
+/* Import highlight.js styles */
+@import 'highlight.js/styles/github.css';
+@import 'highlight.js/styles/github-dark.css';
+
 /* Dark mode styles */
 :root {
 	--bg-primary: #ffffff;

@@ -1,12 +1,22 @@
 <script>
 	import { onMount, onDestroy } from 'svelte';
 	import { marked } from 'marked';
+	import { markedHighlight } from 'marked-highlight';
+	import hljs from 'highlight.js';
 	import FileTree from '$lib/components/FileTree.svelte';
 	import MarkdownEditor from '$lib/components/MarkdownEditor.svelte';
 	import SettingsModal from '$lib/components/SettingsModal.svelte';
 	import Footer from '$lib/components/Footer.svelte';
 
-	// Configure marked to support GitHub Flavored Markdown (GFM)
+	// Configure marked to support GitHub Flavored Markdown (GFM) with syntax highlighting
+	marked.use(markedHighlight({
+		langPrefix: 'hljs language-',
+		highlight(code, lang) {
+			const language = hljs.getLanguage(lang) ? lang : 'plaintext';
+			return hljs.highlight(code, { language }).value;
+		}
+	}));
+
 	marked.setOptions({
 		gfm: true,
 		breaks: true

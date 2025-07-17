@@ -177,8 +177,10 @@ The formatting toolbar can be fully customized through Settings:
 #### Preview Mode
 
 - Toggle between edit and preview modes with `Ctrl+Shift+E`
-- Preview renders your markdown in real-time
-- Supports all standard markdown features
+- Preview renders your markdown in real-time with GitHub-like styling
+- Supports all standard markdown features including tables, strikethrough, and task lists
+- **Syntax Highlighting**: Code blocks support syntax highlighting for 190+ programming languages
+- **Supported Languages**: JavaScript, Python, TypeScript, Java, C#, C++, C, PHP, Ruby, Go, Rust, Kotlin, Swift, SQL, Bash, JSON, YAML, XML, HTML, CSS, and many more
 
 ### Tabs and Navigation
 
@@ -212,7 +214,8 @@ The formatting toolbar can be fully customized through Settings:
 - **Framework**: SvelteKit with Svelte 5
 - **Styling**: Tailwind CSS
 - **Editor**: CodeMirror 6
-- **Markdown**: marked.js for rendering
+- **Markdown**: marked.js for rendering with GitHub Flavored Markdown support
+- **Syntax Highlighting**: highlight.js with support for 190+ programming languages
 - **File Watching**: chokidar for real-time updates
 - **Build Tool**: Vite
 
@@ -472,4 +475,5 @@ MIT License - see [LICENSE](LICENSE) file for details.
 - ✅ Customizable toolbar buttons - choose which formatting options to display
 - ✅ Enhanced hover effects for better user interaction
 - ✅ Strikethrough support in markdown preview
+- ✅ Syntax highlighting for 190+ programming languages in code blocks
 - ✅ Docker containerization support
