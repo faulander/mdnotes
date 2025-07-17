@@ -458,22 +458,4 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 ## Changelog
 
-### v1.0.0 (Initial Release)
-
-- ✅ File explorer with context menus
-- ✅ Tabbed markdown editor
-- ✅ Real-time preview mode
-- ✅ Dark mode support
-- ✅ Resizable sidebar
-- ✅ Settings management
-- ✅ Keyboard shortcuts
-- ✅ Persistent folder states
-- ✅ Auto-save functionality
-- ✅ Recent files section with configurable count
-- ✅ Pinned files for quick access
-- ✅ Formatting toolbar with markdown shortcuts
-- ✅ Customizable toolbar buttons - choose which formatting options to display
-- ✅ Enhanced hover effects for better user interaction
-- ✅ Strikethrough support in markdown preview
-- ✅ Syntax highlighting for 190+ programming languages in code blocks
-- ✅ Docker containerization support
+See [CHANGELOG.md](CHANGELOG.md) for detailed version history and changes.

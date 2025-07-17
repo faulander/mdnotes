@@ -1,7 +1,7 @@
 {
 	"name": "md",
 	"private": true,
-	"version": "0.4.0",
+	"version": "0.4.1",
 	"type": "module",
 	"scripts": {
 		"dev": "vite dev",
@@ -45,6 +45,7 @@
 		"highlight.js": "^11.11.1",
 		"marked": "^16.0.0",
 		"marked-gfm-heading-id": "^4.1.2",
-		"marked-highlight": "^2.2.2"
+		"marked-highlight": "^2.2.2",
+		"wx-svelte-filemanager": "^2.1.0"
 	}
 }

@@ -7,7 +7,11 @@
       "Bash(ls:*)",
       "Bash(chmod:*)",
       "Bash(npm search:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:svar.dev)",
+      "WebFetch(domain:docs.svar.dev)",
+      "Bash(npm run build:*)"
     ],
     "deny": []
   }

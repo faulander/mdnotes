@@ -1,5 +1,6 @@
 <script>
 	import { onMount } from 'svelte';
+	import { Filemanager } from 'wx-svelte-filemanager';
 
 	let {
 		rootPath = '',
@@ -18,9 +19,11 @@
 	} = $props();
 
 	let fileTree = $state([]);
+	let fileManagerData = $state([]);
 	let contextMenu = $state(null);
 	let contextMenuPos = $state({ x: 0, y: 0 });
 	let selectedItem = $state(null);
+	let fileManagerRef = $state(null);
 
 	// Cache for directory contents
 	let directoryCache = $state(new Map());
@@ -77,10 +80,46 @@
 		return allFiles;
 	}
 
-	// Get all pinned files from the tree
-	let pinnedFilesInTree = $derived(
-		getAllFilesFromTree(fileTree).filter((file) => pinnedFiles.has(file.path))
-	);
+	// Simple pinned files list - just store path and name
+	let pinnedFilesInTree = $state([]);
+	
+	// Update pinned files list when pinnedFiles changes
+	$effect(() => {
+		pinnedFilesInTree = Array.from(pinnedFiles).map(filePath => {
+			const normalizedPath = filePath.replace(/\\/g, '/');
+			const fileName = normalizedPath.split('/').pop();
+			return {
+				path: filePath,
+				name: fileName,
+				type: 'file'
+			};
+		});
+	});
+
+	// Convert internal file tree to filemanager format
+	function convertToFileManagerFormat(items) {
+		return items.map((item) => ({
+			id: item.path,
+			name: item.name,
+			type: item.type === 'directory' ? 'folder' : 'file',
+			size: item.size || 0,
+			date: new Date(item.modified || Date.now()),
+			...(item.children && { children: convertToFileManagerFormat(item.children) })
+		}));
+	}
+
+	// Convert filemanager format back to internal format
+	function convertFromFileManagerFormat(items) {
+		return items.map((item) => ({
+			path: item.id,
+			name: item.name,
+			type: item.type === 'folder' ? 'directory' : 'file',
+			size: item.size,
+			modified: item.date?.getTime() || Date.now(),
+			...(item.children && { children: convertFromFileManagerFormat(item.children) })
+		}));
+	}
+
 
 	async function loadDirectory(path = '') {
 		// Check cache first
@@ -125,7 +164,9 @@
 	}
 
 	async function loadFileTree() {
-		fileTree = await loadDirectory();
+		const items = await loadDirectory();
+		fileTree = items;
+		fileManagerData = convertToFileManagerFormat(items);
 	}
 
 	async function toggleFolder(folderPath) {
@@ -141,6 +182,7 @@
 			if (folder && !folder.children) {
 				folder.children = await loadDirectory(folderPath);
 				fileTree = [...fileTree];
+				fileManagerData = convertToFileManagerFormat(fileTree);
 			}
 		}
 
@@ -191,6 +233,38 @@
 		closeContextMenu();
 	}
 
+	// Handle file manager events
+	function handleFileManagerEvent(event) {
+		const { action, data } = event.detail;
+		
+		switch (action) {
+			case 'select-file':
+				if (data.type === 'file') {
+					const internalItem = convertFromFileManagerFormat([data])[0];
+					onFileSelect(internalItem);
+				}
+				break;
+			case 'open-file':
+				if (data.type === 'file') {
+					const internalItem = convertFromFileManagerFormat([data])[0];
+					onFileSelect(internalItem);
+				}
+				break;
+			case 'create-file':
+				onContextMenu('create_file', { type: 'directory', path: data.parent || '', name: 'Parent' });
+				break;
+			case 'create-folder':
+				onContextMenu('create_folder', { type: 'directory', path: data.parent || '', name: 'Parent' });
+				break;
+			case 'delete-files':
+				if (data.length > 0) {
+					const internalItem = convertFromFileManagerFormat([data[0]])[0];
+					onContextMenu('delete', internalItem);
+				}
+				break;
+		}
+	}
+
 	// Expose loadFileTree method with debouncing
 	export async function refresh() {
 		// Clear existing timeout
@@ -221,6 +295,7 @@
 					if (folder) {
 						folder.children = await loadDirectory(folderPath);
 						fileTree = [...fileTree]; // Update the tree after each folder is loaded
+						fileManagerData = convertToFileManagerFormat(fileTree);
 					} else {
 						// Folder no longer exists, remove from expanded folders
 						newExpandedFolders.delete(folderPath);
@@ -255,6 +330,7 @@
 				if (folder && !folder.children) {
 					folder.children = await loadDirectory(folderPath);
 					fileTree = [...fileTree]; // Update tree after each folder
+					fileManagerData = convertToFileManagerFormat(fileTree);
 				}
 			} catch (error) {
 				console.error('Error restoring folder:', folderPath, error);
@@ -275,6 +351,7 @@
 				if (folder) {
 					folder.children = items;
 					fileTree = [...fileTree];
+					fileManagerData = convertToFileManagerFormat(fileTree);
 				}
 			});
 		}
@@ -282,8 +359,9 @@
 
 	// Method to navigate to a file and expand its parent directories
 	export function navigateToFile(filePath) {
-		// Get the directory path of the file
-		const pathParts = filePath.split('/');
+		// Normalize path separators - handle both Windows (\) and Unix (/) separators
+		const normalizedPath = filePath.replace(/\\/g, '/');
+		const pathParts = normalizedPath.split('/');
 		const fileName = pathParts.pop();
 
 		// Expand all parent directories
@@ -315,7 +393,6 @@
 		}
 	});
 
-	// Remove the problematic effect that was causing infinite loops
 
 	onMount(async () => {
 		// Don't load if rootPath is not set
@@ -398,7 +475,7 @@
 	{#if pinnedFilesInTree.length > 0}
 		<div class="pinned-files-section mb-2 border-b border-gray-200">
 			<div class="px-2 py-1 text-xs font-semibold tracking-wider text-gray-600 uppercase">
-				Pinned Files
+				Pinned Files ({pinnedFilesInTree.length})
 			</div>
 			<div class="px-2 pb-2">
 				{#each pinnedFilesInTree as item}
@@ -406,15 +483,47 @@
 				{/each}
 			</div>
 		</div>
+	{:else}
+		<!-- Debug: Show when no pinned files are detected -->
+		<div class="pinned-files-debug mb-2 border-b border-gray-200">
+			<div class="px-2 py-1 text-xs font-semibold tracking-wider text-red-600 uppercase">
+				DEBUG: No Pinned Files Detected (Tree: {fileTree.length}, Pinned: {pinnedFiles.size}, Result: {pinnedFilesInTree.length})
+			</div>
+		</div>
 	{/if}
 
-	{#each fileTree as item}
-		{@render renderTreeItem(item, 0)}
-	{/each}
-
-	{#if fileTree.length === 0}
+	<!-- File Tree Display -->
+	{#if fileTree.length > 0}
+		{#each fileTree as item}
+			{@render renderTreeItem(item, 0)}
+		{/each}
+	{:else}
 		<div class="p-4 text-gray-500 {spacingConfig.fontSize}">No markdown files found</div>
 	{/if}
+	
+	<!-- File Manager Component (disabled due to errors) -->
+	<!-- 
+	<div class="filemanager-container" style="display: none;">
+		{#if fileManagerData.length > 0}
+			<Filemanager 
+				bind:this={fileManagerRef}
+				data={fileManagerData}
+				mode={{
+					tree: true,
+					view: false,
+					preview: false,
+					search: false,
+					breadcrumb: false
+				}}
+				on:select-file={handleFileManagerEvent}
+				on:open-file={handleFileManagerEvent}
+				on:create-file={handleFileManagerEvent}
+				on:create-folder={handleFileManagerEvent}
+				on:delete-files={handleFileManagerEvent}
+			/>
+		{/if}
+	</div>
+	-->
 </div>
 
 {#snippet renderTreeItem(item, depth)}
@@ -527,7 +636,7 @@
 			class="file-item group flex cursor-pointer items-center select-none hover:bg-blue-50 {spacingConfig.verticalPadding} {spacingConfig.horizontalPadding} mb-1 rounded"
 			onclick={() => handleItemClick(item)}
 		>
-			<span class="mr-2 text-gray-600">
+			<span class="mr-2 text-blue-500">
 				<!-- Document icon -->
 				<svg class="{spacingConfig.iconSize} inline" fill="currentColor" viewBox="0 0 20 20">
 					<path
@@ -601,6 +710,22 @@
 		user-select: none;
 	}
 
+	.filemanager-container {
+		/* Override filemanager styles to fit our design */
+		min-height: 200px;
+	}
+
+	.filemanager-container :global(.wx-filemanager) {
+		background: transparent;
+		border: none;
+	}
+
+	.filemanager-container :global(.wx-filemanager-tree) {
+		background: transparent;
+		border: none;
+		padding: 0;
+	}
+
 	.file-item:hover {
 		background-color: #f3f4f6;
 	}
@@ -645,63 +770,6 @@
 		background-color: var(--bg-secondary);
 	}
 
-	/* Fix directory icons in dark mode */
-	:global(.dark) .file-item span {
-		background-color: transparent !important;
-		color: inherit !important;
-	}
-
-	/* More specific targeting for emoji spans */
-	:global(.dark) .file-item span:first-child,
-	:global(.dark) .file-item span:nth-child(2) {
-		background-color: transparent !important;
-		background: none !important;
-	}
-
-	/* Dark mode colors for icons */
-	:global(.dark) .file-item .text-blue-500 {
-		color: #60a5fa !important;
-	}
-
-	:global(.dark) .file-item .text-gray-600 {
-		color: #d1d5db !important;
-	}
-
-	:global(.dark) .file-item .text-gray-500 {
-		color: #9ca3af !important;
-	}
-
-	/* Fix arrow indicator backgrounds */
-	.arrow-indicator {
-		background-color: transparent !important;
-		background: none !important;
-		color: inherit !important;
-	}
-
-	.arrow-indicator svg {
-		background-color: transparent !important;
-		background: none !important;
-	}
-
-	/* More specific targeting for arrow indicators */
-	.file-item .text-xs {
-		background-color: transparent !important;
-		background: none !important;
-		color: inherit !important;
-	}
-
-	:global(.dark) .file-item .text-xs {
-		background-color: transparent !important;
-		background: none !important;
-		color: inherit !important;
-	}
-
-	:global(.dark) .arrow-indicator {
-		background-color: transparent !important;
-		background: none !important;
-		color: inherit !important;
-	}
-
 	/* Recent file name styling */
 	.recent-file-name {
 		color: #000000 !important;
@@ -734,5 +802,24 @@
 	:global(.dark) .new-folder-button button:hover {
 		background-color: var(--bg-secondary);
 		border-color: var(--border-color);
+	}
+
+	/* FileManager dark mode support */
+	:global(.dark) .filemanager-container .wx-filemanager {
+		background-color: var(--bg-primary);
+		color: var(--text-primary);
+	}
+
+	:global(.dark) .filemanager-container .wx-filemanager-tree {
+		background-color: var(--bg-primary);
+		color: var(--text-primary);
+	}
+
+	:global(.dark) .filemanager-container .wx-filemanager-tree .wx-item {
+		color: var(--text-primary);
+	}
+
+	:global(.dark) .filemanager-container .wx-filemanager-tree .wx-item:hover {
+		background-color: var(--bg-secondary);
 	}
 </style>
