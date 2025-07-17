@@ -339,6 +339,10 @@ body {
 	color: #58a6ff;
 }
 
+.github-markdown-dark del {
+	text-decoration: line-through;
+}
+
 /* GitHub-like syntax highlighting hints */
 .github-markdown pre.language-javascript,
 .github-markdown pre.language-js {

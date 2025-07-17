@@ -17,7 +17,7 @@ A local-first markdown note-taking application built with SvelteKit and Tailwind
 
 - **Tabbed Interface**: Open multiple documents simultaneously
 - **Split View**: Toggle between editor and preview modes
-- **Formatting Toolbar**: Quick access to common markdown formatting options
+- **Customizable Formatting Toolbar**: Quick access to markdown formatting with customizable button selection
 - **Syntax Highlighting**: Markdown syntax highlighting in the editor
 - **Line Wrapping**: No horizontal scrolling - text wraps naturally
 - **Unsaved Changes Indicator**: Visual indicator (●) shows unsaved changes in tabs
@@ -38,7 +38,7 @@ A local-first markdown note-taking application built with SvelteKit and Tailwind
 
 - **Root Directory**: Choose your notes folder location
 - **Editor Preferences**: Customize font size and font family
-- **Interface Options**: Configure toolbar visibility, file tree spacing, and recent files count
+- **Interface Options**: Configure toolbar visibility, customize toolbar buttons, file tree spacing, and recent files count
 - **Auto-save**: Optional automatic saving with configurable delay
 - **Behavior Options**: Configure confirmation dialogs and other preferences
 
@@ -145,9 +145,34 @@ Your notes will be stored in the `./notes` directory, and settings are persisted
 #### Writing and Editing
 
 - The editor provides syntax highlighting for markdown
-- **Formatting Toolbar**: Quick access to headings, bold, italic, lists, links, and more
+- **Customizable Formatting Toolbar**: Quick access to markdown formatting functions
 - Text automatically wraps - no horizontal scrolling
 - Unsaved changes are indicated with an orange dot (●) in the tab
+
+#### Toolbar Customization
+
+The formatting toolbar can be fully customized through Settings:
+
+**Available Toolbar Buttons:**
+- **Headings**: H1, H2, H3 buttons for different heading levels
+- **Text Formatting**: Bold, italic, strikethrough, inline code
+- **Code Blocks**: Insert code blocks with syntax highlighting
+- **Lists**: Bullet lists and numbered lists
+- **Links**: Insert markdown links
+- **Quotes**: Blockquote formatting
+- **Tables**: Insert formatted tables (advanced)
+- **Horizontal Rule**: Insert divider lines (advanced)
+
+**How to Customize:**
+1. Open Settings (⚙️ icon in sidebar)
+2. Navigate to "Interface" section
+3. Ensure "Show editor toolbar" is enabled
+4. Select/deselect specific toolbar buttons you want to display
+5. Click "Save" to apply changes
+
+**Default Configuration:**
+- Most commonly used buttons are enabled by default (headings, bold, italic, code, links, lists, quotes)
+- Advanced features like tables and horizontal rules are disabled by default but can be enabled as needed
 
 #### Preview Mode
 
@@ -175,6 +200,7 @@ Your notes will be stored in the `./notes` directory, and settings are persisted
 - **Font Size**: Adjust from 8px to 24px
 - **Font Family**: Choose your preferred monospace font
 - **Toolbar Visibility**: Show/hide the formatting toolbar
+- **Toolbar Customization**: Select which formatting buttons to display (headings, bold, italic, code, links, lists, quotes, strikethrough, tables, horizontal rules)
 - **Recent Files Count**: Configure how many recent files to display (0-10)
 - **File Tree Spacing**: Choose between compact, normal, or comfortable spacing
 - **Auto-save**: Enable automatic saving with customizable delay
@@ -443,4 +469,7 @@ MIT License - see [LICENSE](LICENSE) file for details.
 - ✅ Recent files section with configurable count
 - ✅ Pinned files for quick access
 - ✅ Formatting toolbar with markdown shortcuts
+- ✅ Customizable toolbar buttons - choose which formatting options to display
+- ✅ Enhanced hover effects for better user interaction
+- ✅ Strikethrough support in markdown preview
 - ✅ Docker containerization support

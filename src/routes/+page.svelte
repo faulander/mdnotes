@@ -5,6 +5,12 @@
 	import MarkdownEditor from '$lib/components/MarkdownEditor.svelte';
 	import SettingsModal from '$lib/components/SettingsModal.svelte';
 	import Footer from '$lib/components/Footer.svelte';
+
+	// Configure marked to support GitHub Flavored Markdown (GFM)
+	marked.setOptions({
+		gfm: true,
+		breaks: true
+	});
 	import { FileWatcher } from '$lib/fileWatcher.js';
 	import { settings } from '$lib/stores/settings.js';
 	import { applyTheme, watchSystemTheme } from '$lib/theme.js';
@@ -796,6 +802,7 @@
 								onChange={handleEditorChange}
 								darkMode={isDarkMode}
 								showToolbar={currentSettings.showToolbar}
+								toolbarButtons={currentSettings.toolbarButtons}
 							/>
 						</div>
 					{:else}

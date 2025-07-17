@@ -15,7 +15,21 @@ const defaultSettings = {
 	showFooter: true,
 	fileTreeSpacing: 'normal', // 'compact', 'normal', 'comfortable'
 	showToolbar: true,
-	recentFilesCount: 5 // 0-10, 0 hides the section
+	recentFilesCount: 5, // 0-10, 0 hides the section
+	toolbarButtons: {
+		headings: true,
+		bold: true,
+		italic: true,
+		code: true,
+		codeBlock: true,
+		link: true,
+		list: true,
+		orderedList: true,
+		quote: true,
+		strikethrough: false,
+		table: false,
+		hr: false
+	}
 };
 
 // Create settings store
@@ -36,6 +50,10 @@ function createSettingsStore() {
 						const parsed = JSON.parse(stored);
 						// Merge with defaults to ensure new settings are included
 						const merged = { ...defaultSettings, ...parsed };
+						// Ensure toolbarButtons object exists and is properly merged
+						if (merged.toolbarButtons) {
+							merged.toolbarButtons = { ...defaultSettings.toolbarButtons, ...merged.toolbarButtons };
+						}
 						set(merged);
 						return merged;
 					} catch (error) {

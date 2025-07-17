@@ -5,7 +5,13 @@
 	import { oneDark } from '@codemirror/theme-one-dark';
 	import { EditorState } from '@codemirror/state';
 
-	let { value = '', onChange = () => {}, darkMode = false, showToolbar = true } = $props();
+	let { 
+		value = '', 
+		onChange = () => {}, 
+		darkMode = false, 
+		showToolbar = true,
+		toolbarButtons = {}
+	} = $props();
 
 	let editorElement;
 	let editorView;
@@ -67,6 +73,18 @@
 
 	function insertQuote() {
 		insertText('> ');
+	}
+
+	function insertStrikethrough() {
+		insertText('~~', '~~');
+	}
+
+	function insertTable() {
+		insertText('| Header 1 | Header 2 | Header 3 |\n|----------|----------|----------|\n| Cell 1   | Cell 2   | Cell 3   |\n| Cell 4   | Cell 5   | Cell 6   |\n\n');
+	}
+
+	function insertHr() {
+		insertText('\n---\n\n');
 	}
 
 	function createEditor() {
@@ -177,97 +195,145 @@
 			class:border-gray-600={darkMode}
 		>
 			<!-- Headings -->
-			<div class="flex items-center gap-1">
-				<button
-					class="rounded px-2 py-1 text-sm font-medium hover:bg-gray-200"
-					class:hover:bg-gray-700={darkMode}
-					class:text-gray-100={darkMode}
-					onclick={() => insertHeading(1)}
-					title="Heading 1">H1</button
-				>
-				<button
-					class="rounded px-2 py-1 text-sm font-medium hover:bg-gray-200"
-					class:hover:bg-gray-700={darkMode}
-					class:text-gray-100={darkMode}
-					onclick={() => insertHeading(2)}
-					title="Heading 2">H2</button
-				>
-				<button
-					class="rounded px-2 py-1 text-sm font-medium hover:bg-gray-200"
-					class:hover:bg-gray-700={darkMode}
-					class:text-gray-100={darkMode}
-					onclick={() => insertHeading(3)}
-					title="Heading 3">H3</button
-				>
-			</div>
-
-			<div class="mx-1 h-6 w-px bg-gray-300" class:bg-gray-600={darkMode}></div>
+			{#if toolbarButtons.headings}
+				<div class="flex items-center gap-1">
+					<button
+						class="rounded px-2 py-1 text-sm font-medium transition-all hover:shadow-sm hover:scale-105"
+						class:hover:bg-gray-200={!darkMode} class:hover:bg-blue-500={darkMode} class:hover:text-gray-100={darkMode}
+						class:text-gray-100={darkMode}
+						onclick={() => insertHeading(1)}
+						title="Heading 1">H1</button
+					>
+					<button
+						class="rounded px-2 py-1 text-sm font-medium transition-all hover:shadow-sm hover:scale-105"
+						class:hover:bg-gray-200={!darkMode} class:hover:bg-blue-500={darkMode} class:hover:text-gray-100={darkMode}
+						class:text-gray-100={darkMode}
+						onclick={() => insertHeading(2)}
+						title="Heading 2">H2</button
+					>
+					<button
+						class="rounded px-2 py-1 text-sm font-medium transition-all hover:shadow-sm hover:scale-105"
+						class:hover:bg-gray-200={!darkMode} class:hover:bg-blue-500={darkMode} class:hover:text-gray-100={darkMode}
+						class:text-gray-100={darkMode}
+						onclick={() => insertHeading(3)}
+						title="Heading 3">H3</button
+					>
+				</div>
+				<div class="mx-1 h-6 w-px bg-gray-300" class:bg-gray-600={darkMode}></div>
+			{/if}
 
 			<!-- Text formatting -->
-			<button
-				class="rounded px-2 py-1 text-sm font-bold hover:bg-gray-200"
-				class:hover:bg-gray-700={darkMode}
-				class:text-gray-100={darkMode}
-				onclick={insertBold}
-				title="Bold">B</button
-			>
-			<button
-				class="rounded px-2 py-1 text-sm italic hover:bg-gray-200"
-				class:hover:bg-gray-700={darkMode}
-				class:text-gray-100={darkMode}
-				onclick={insertItalic}
-				title="Italic">I</button
-			>
-			<button
-				class="rounded px-2 py-1 font-mono text-sm hover:bg-gray-200"
-				class:hover:bg-gray-700={darkMode}
-				class:text-gray-100={darkMode}
-				onclick={insertCode}
-				title="Inline code">`</button
-			>
-
-			<div class="mx-1 h-6 w-px bg-gray-300" class:bg-gray-600={darkMode}></div>
+			{#if toolbarButtons.bold}
+				<button
+					class="rounded px-2 py-1 text-sm font-bold transition-all hover:shadow-sm hover:scale-105"
+					class:hover:bg-gray-200={!darkMode} class:hover:bg-blue-500={darkMode} class:hover:text-gray-100={darkMode}
+					class:text-gray-100={darkMode}
+					onclick={insertBold}
+					title="Bold">B</button
+				>
+			{/if}
+			{#if toolbarButtons.italic}
+				<button
+					class="rounded px-2 py-1 text-sm italic transition-all hover:shadow-sm hover:scale-105"
+					class:hover:bg-gray-200={!darkMode} class:hover:bg-blue-500={darkMode} class:hover:text-gray-100={darkMode}
+					class:text-gray-100={darkMode}
+					onclick={insertItalic}
+					title="Italic">I</button
+				>
+			{/if}
+			{#if toolbarButtons.strikethrough}
+				<button
+					class="rounded px-2 py-1 text-sm transition-all hover:shadow-sm hover:scale-105"
+					class:hover:bg-gray-200={!darkMode} class:hover:bg-blue-500={darkMode} class:hover:text-gray-100={darkMode}
+					class:text-gray-100={darkMode}
+					onclick={insertStrikethrough}
+					title="Strikethrough">~~</button
+				>
+			{/if}
+			{#if toolbarButtons.code}
+				<button
+					class="rounded px-2 py-1 font-mono text-sm transition-all hover:shadow-sm hover:scale-105"
+					class:hover:bg-gray-200={!darkMode} class:hover:bg-blue-500={darkMode} class:hover:text-gray-100={darkMode}
+					class:text-gray-100={darkMode}
+					onclick={insertCode}
+					title="Inline code">`</button
+				>
+			{/if}
+			{#if toolbarButtons.codeBlock}
+				<button
+					class="rounded px-2 py-1 text-sm transition-all hover:shadow-sm hover:scale-105"
+					class:hover:bg-gray-200={!darkMode} class:hover:bg-blue-500={darkMode} class:hover:text-gray-100={darkMode}
+					class:text-gray-100={darkMode}
+					onclick={insertCodeBlock}
+					title="Code block">```</button
+				>
+			{/if}
+			
+			{#if toolbarButtons.bold || toolbarButtons.italic || toolbarButtons.strikethrough || toolbarButtons.code || toolbarButtons.codeBlock}
+				<div class="mx-1 h-6 w-px bg-gray-300" class:bg-gray-600={darkMode}></div>
+			{/if}
 
 			<!-- Lists -->
-			<button
-				class="rounded px-2 py-1 text-sm hover:bg-gray-200"
-				class:hover:bg-gray-700={darkMode}
-				class:text-gray-100={darkMode}
-				onclick={insertList}
-				title="Bullet list">• List</button
-			>
-			<button
-				class="rounded px-2 py-1 text-sm hover:bg-gray-200"
-				class:hover:bg-gray-700={darkMode}
-				class:text-gray-100={darkMode}
-				onclick={insertOrderedList}
-				title="Numbered list">1. List</button
-			>
-
-			<div class="mx-1 h-6 w-px bg-gray-300" class:bg-gray-600={darkMode}></div>
+			{#if toolbarButtons.list}
+				<button
+					class="rounded px-2 py-1 text-sm transition-all hover:shadow-sm hover:scale-105"
+					class:hover:bg-gray-200={!darkMode} class:hover:bg-blue-500={darkMode} class:hover:text-gray-100={darkMode}
+					class:text-gray-100={darkMode}
+					onclick={insertList}
+					title="Bullet list">• List</button
+				>
+			{/if}
+			{#if toolbarButtons.orderedList}
+				<button
+					class="rounded px-2 py-1 text-sm transition-all hover:shadow-sm hover:scale-105"
+					class:hover:bg-gray-200={!darkMode} class:hover:bg-blue-500={darkMode} class:hover:text-gray-100={darkMode}
+					class:text-gray-100={darkMode}
+					onclick={insertOrderedList}
+					title="Numbered list">1. List</button
+				>
+			{/if}
+			
+			{#if toolbarButtons.list || toolbarButtons.orderedList}
+				<div class="mx-1 h-6 w-px bg-gray-300" class:bg-gray-600={darkMode}></div>
+			{/if}
 
 			<!-- Other -->
-			<button
-				class="rounded px-2 py-1 text-sm hover:bg-gray-200"
-				class:hover:bg-gray-700={darkMode}
-				class:text-gray-100={darkMode}
-				onclick={insertLink}
-				title="Link">Link</button
-			>
-			<button
-				class="rounded px-2 py-1 text-sm hover:bg-gray-200"
-				class:hover:bg-gray-700={darkMode}
-				class:text-gray-100={darkMode}
-				onclick={insertQuote}
-				title="Quote">" Quote</button
-			>
-			<button
-				class="rounded px-2 py-1 text-sm hover:bg-gray-200"
-				class:hover:bg-gray-700={darkMode}
-				class:text-gray-100={darkMode}
-				onclick={insertCodeBlock}
-				title="Code block">```</button
-			>
+			{#if toolbarButtons.link}
+				<button
+					class="rounded px-2 py-1 text-sm transition-all hover:shadow-sm hover:scale-105"
+					class:hover:bg-gray-200={!darkMode} class:hover:bg-blue-500={darkMode} class:hover:text-gray-100={darkMode}
+					class:text-gray-100={darkMode}
+					onclick={insertLink}
+					title="Link">Link</button
+				>
+			{/if}
+			{#if toolbarButtons.quote}
+				<button
+					class="rounded px-2 py-1 text-sm transition-all hover:shadow-sm hover:scale-105"
+					class:hover:bg-gray-200={!darkMode} class:hover:bg-blue-500={darkMode} class:hover:text-gray-100={darkMode}
+					class:text-gray-100={darkMode}
+					onclick={insertQuote}
+					title="Quote">" Quote</button
+				>
+			{/if}
+			{#if toolbarButtons.table}
+				<button
+					class="rounded px-2 py-1 text-sm transition-all hover:shadow-sm hover:scale-105"
+					class:hover:bg-gray-200={!darkMode} class:hover:bg-blue-500={darkMode} class:hover:text-gray-100={darkMode}
+					class:text-gray-100={darkMode}
+					onclick={insertTable}
+					title="Table">Table</button
+				>
+			{/if}
+			{#if toolbarButtons.hr}
+				<button
+					class="rounded px-2 py-1 text-sm transition-all hover:shadow-sm hover:scale-105"
+					class:hover:bg-gray-200={!darkMode} class:hover:bg-blue-500={darkMode} class:hover:text-gray-100={darkMode}
+					class:text-gray-100={darkMode}
+					onclick={insertHr}
+					title="Horizontal rule">---</button
+				>
+			{/if}
 		</div>
 	{/if}
 

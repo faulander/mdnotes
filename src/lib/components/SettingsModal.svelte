@@ -167,6 +167,62 @@
 							<span class="text-sm">Show editor toolbar for markdown formatting</span>
 						</label>
 
+						{#if currentSettings.showToolbar}
+							<div class="ml-6 space-y-3">
+								<h4 class="text-sm font-medium text-gray-700">Toolbar Buttons</h4>
+								<div class="grid grid-cols-2 gap-2">
+									<label class="flex items-center gap-2">
+										<input type="checkbox" bind:checked={currentSettings.toolbarButtons.headings} />
+										<span class="text-sm">Headings (H1, H2, H3)</span>
+									</label>
+									<label class="flex items-center gap-2">
+										<input type="checkbox" bind:checked={currentSettings.toolbarButtons.bold} />
+										<span class="text-sm">Bold</span>
+									</label>
+									<label class="flex items-center gap-2">
+										<input type="checkbox" bind:checked={currentSettings.toolbarButtons.italic} />
+										<span class="text-sm">Italic</span>
+									</label>
+									<label class="flex items-center gap-2">
+										<input type="checkbox" bind:checked={currentSettings.toolbarButtons.strikethrough} />
+										<span class="text-sm">Strikethrough</span>
+									</label>
+									<label class="flex items-center gap-2">
+										<input type="checkbox" bind:checked={currentSettings.toolbarButtons.code} />
+										<span class="text-sm">Inline Code</span>
+									</label>
+									<label class="flex items-center gap-2">
+										<input type="checkbox" bind:checked={currentSettings.toolbarButtons.codeBlock} />
+										<span class="text-sm">Code Block</span>
+									</label>
+									<label class="flex items-center gap-2">
+										<input type="checkbox" bind:checked={currentSettings.toolbarButtons.link} />
+										<span class="text-sm">Link</span>
+									</label>
+									<label class="flex items-center gap-2">
+										<input type="checkbox" bind:checked={currentSettings.toolbarButtons.list} />
+										<span class="text-sm">Bullet List</span>
+									</label>
+									<label class="flex items-center gap-2">
+										<input type="checkbox" bind:checked={currentSettings.toolbarButtons.orderedList} />
+										<span class="text-sm">Numbered List</span>
+									</label>
+									<label class="flex items-center gap-2">
+										<input type="checkbox" bind:checked={currentSettings.toolbarButtons.quote} />
+										<span class="text-sm">Quote</span>
+									</label>
+									<label class="flex items-center gap-2">
+										<input type="checkbox" bind:checked={currentSettings.toolbarButtons.table} />
+										<span class="text-sm">Table</span>
+									</label>
+									<label class="flex items-center gap-2">
+										<input type="checkbox" bind:checked={currentSettings.toolbarButtons.hr} />
+										<span class="text-sm">Horizontal Rule</span>
+									</label>
+								</div>
+							</div>
+						{/if}
+
 						<div>
 							<label class="mb-2 block text-sm font-medium text-gray-700"> Date/Time Format </label>
 							<select
