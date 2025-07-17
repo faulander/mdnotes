@@ -420,19 +420,6 @@
 </script>
 
 <div class="file-tree">
-	<!-- New Folder Button -->
-	<div class="new-folder-button mb-2 border-b border-gray-200 p-2">
-		<button
-			type="button"
-			class="flex w-full cursor-pointer items-center gap-2 rounded border border-gray-300 bg-white px-3 py-2 text-left text-sm text-gray-700 shadow-sm transition-colors hover:bg-gray-100 hover:shadow-md active:shadow-sm"
-			onclick={() => handleContextMenuAction('create_folder_root')}
-		>
-			<svg class="h-4 w-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
-				<path d="M2 6a2 2 0 012-2h4l2 2h4a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
-			</svg>
-			<span>New Rootfolder</span>
-		</button>
-	</div>
 
 	<!-- Recent Files Section -->
 	{#if recentFilesCount > 0 && recentFiles.length > 0}

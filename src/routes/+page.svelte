@@ -746,24 +746,16 @@
 	>
 		{#if sidebarVisible}
 			<div
-				class="flex flex-shrink-0 items-center justify-between border-b border-gray-300 p-4"
+				class="flex flex-shrink-0 items-center justify-center border-b border-gray-300 p-4"
 				class:border-gray-600={isDarkMode}
 			>
 				<h2
-					class="mr-2 flex-1 truncate text-lg font-semibold text-gray-800"
+					class="truncate text-lg font-semibold text-gray-800"
 					class:text-gray-100={isDarkMode}
 					title={rootPath}
 				>
 					{rootPath ? rootPath.split('\\').pop() || rootPath.split('/').pop() || 'Files' : 'Files'}
 				</h2>
-				<button
-					class="flex-shrink-0 rounded p-1 hover:bg-gray-200"
-					class:hover:bg-gray-600={isDarkMode}
-					onclick={() => (showSettings = true)}
-					title="Settings"
-				>
-					⚙️
-				</button>
 			</div>
 
 			<div class="flex-1 overflow-y-auto p-2">
@@ -787,6 +779,43 @@
 				{:else}
 					<div class="p-4 text-sm text-gray-500">Loading...</div>
 				{/if}
+			</div>
+
+			<!-- Bottom Actions -->
+			<div class="flex-shrink-0 border-t border-gray-300 p-4" class:border-gray-600={isDarkMode}>
+				<div class="space-y-2">
+					<!-- New Rootfolder Button -->
+					<button
+						class="flex w-full items-center justify-center gap-2 rounded border px-3 py-2 text-sm shadow-sm transition-colors hover:shadow-md active:shadow-sm"
+						class:border-gray-300={!isDarkMode}
+						class:bg-white={!isDarkMode}
+						class:text-gray-700={!isDarkMode}
+						class:hover:bg-gray-100={!isDarkMode}
+						class:border-gray-500={isDarkMode}
+						class:bg-gray-700={isDarkMode}
+						class:text-gray-100={isDarkMode}
+						class:hover:bg-gray-600={isDarkMode}
+						onclick={() => handleContextMenu('create_folder_root', { type: 'directory', path: '', name: 'Root' })}
+						title="Create New Root Folder"
+					>
+						<svg class="h-4 w-4 text-blue-500" class:text-blue-400={isDarkMode} fill="currentColor" viewBox="0 0 20 20">
+							<path d="M2 6a2 2 0 012-2h4l2 2h4a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
+						</svg>
+						<span>New Rootfolder</span>
+					</button>
+					
+					<!-- Settings Button -->
+					<button
+						class="flex w-full items-center justify-center gap-2 rounded p-2 transition-colors"
+						class:hover:bg-gray-200={!isDarkMode}
+						class:hover:bg-gray-600={isDarkMode}
+						onclick={() => (showSettings = true)}
+						title="Settings"
+					>
+						<span>⚙️</span>
+						<span class="text-sm font-medium" class:text-gray-700={!isDarkMode} class:text-gray-100={isDarkMode}>Settings</span>
+					</button>
+				</div>
 			</div>
 		{/if}
 
